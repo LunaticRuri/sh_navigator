@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="NLSH 기반 네트워크 테스트 사이트" />
+    <title>NLSH 기반 네트워크 테스트 사이트</title>
+    
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    
+    <link rel="stylesheet" href="css/styles.css" />
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- 사이드바 -->
+      <nav class="sidebar">
+        <div class="sidebar-header">
+          <h2>
+            <a href="/" style="text-decoration: none; color: inherit"
+              >SH Navigator</a
+            >
+          </h2>
+        </div>
+        <ul class="sidebar-menu">
+          <li
+            class="menu-item active"
+            data-menu-type="book"
+            onclick="switchMenu('book')"
+          >
+            <span class="menu-text">책 검색</span>
+          </li>
+          <li
+            class="menu-item"
+            data-menu-type="subject"
+            onclick="switchMenu('subject')"
+          >
+            <span class="menu-text">주제 검색</span>
+          </li>
+          <li
+            class="menu-item"
+            data-menu-type="chatbot"
+            onclick="switchMenu('chatbot')"
+          >
+            <span class="menu-text">챗봇</span>
+          </li>
+          <li
+            class="menu-item"
+            data-menu-type="network"
+            onclick="switchMenu('network')"
+          >
+            <span class="menu-text">주제 네트워크 시각화 탐색</span>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- 메인 콘텐츠 -->
+      <main class="main-content">
+        <!-- 도서 검색 섹션 -->
+        <div id="book-section" class="content-section active">
+          <header class="content-header">
+            <h1>도서 검색</h1>
+            <p>데이터베이스에서 도서 검색</p>
+          </header>
+
+          <!-- 검색 폼 -->
+          <div class="search-section">
+            <div class="search-tabs">
+              <button class="tab-button active" onclick="switchTab('general')">
+                일반 검색
+              </button>
+              <button class="tab-button" onclick="switchTab('advanced')">
+                상세 검색
+              </button>
+              <button class="tab-button" onclick="switchTab('vector')">
+                벡터 검색
+              </button>
+            </div>
+
+            <!-- 일반 검색 -->
+            <div id="general-search" class="search-form active">
+              <div class="search-input-group">
+                <input
+                  type="text"
+                  id="general-query"
+                  placeholder="제목, 책 소개, 목차를 키워드로 검색"
+                />
+                <button onclick="performGeneralSearch()">검색</button>
+              </div>
+            </div>
+
+            <!-- 상세 검색 -->
+            <div id="advanced-search" class="search-form">
+              <div class="search-grid">
+                <div class="search-field">
+                  <label for="title-search">제목:</label>
+                  <input
+                    type="text"
+                    id="title-search"
+                    placeholder="도서 제목"
+                  />
+                </div>
+                <div class="search-field">
+                  <label for="isbn-search">ISBN:</label>
+                  <input type="text" id="isbn-search" placeholder="ISBN 번호" />
+                </div>
+              </div>
+              <button onclick="performAdvancedSearch()">상세 검색</button>
+            </div>
+
+            <!-- 벡터 검색 -->
+            <div id="vector-search" class="search-form">
+              <div class="search-input-group">
+                <input
+                  type="text"
+                  id="vector-query"
+                  placeholder="벡터로 계산된 유사도 기반으로 도서를 검색"
+                />
+                <button onclick="performVectorSearch()">벡터 검색</button>
+              </div>
+              <div class="search-options">
+                <div class="option-group">
+                  <label for="vector-limit">결과 개수:</label>
+                  <select id="vector-limit">
+                    <option value="10">10개</option>
+                    <option value="25" selected>25개</option>
+                    <option value="50">50개</option>
+                    <option value="100">100개</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- 검색 결과 -->
+            <div class="results-section">
+              <div id="search-book-info" class="search-info"></div>
+              <div id="loading-book" class="loading">검색 중...</div>
+              <div id="results-book-container"></div>
+
+              <!-- 페이지네이션 -->
+              <div id="pagination-book" class="pagination"></div>
+            </div>
+          </div>
+        </div>
+        <!-- 주제 검색 섹션 -->
+        <div id="subject-section" class="content-section">
+          <header class="content-header">
+            <h1>주제 검색</h1>
+            <p>주제 표목을 활용한 탐색 기능</p>
+          </header>
+          <!-- 검색 폼 -->
+          <div class="search-section">
+            <div class="search-tabs">
+              <button
+                class="tab-button active"
+                onclick="switchTab('general-subject')"
+              >
+                주제 일반 검색
+              </button>
+              <button class="tab-button" onclick="switchTab('vector-subject')">
+                주제 벡터 검색
+              </button>
+            </div>
+
+            <!-- 주제 일반 검색 -->
+            <div id="general-subject-search" class="search-form active">
+              <div class="search-input-group">
+                <input
+                  type="text"
+                  id="general-subject-query"
+                  placeholder="주제명을 키워드로 검색"
+                />
+                <button onclick="performGeneralSubjectSearch()">검색</button>
+              </div>
+            </div>
+
+            <!-- 주제 벡터 검색 -->
+            <div id="vector-subject-search" class="search-form">
+              <div class="search-input-group">
+                <input
+                  type="text"
+                  id="vector-subject-query"
+                  placeholder="벡터로 계산된 유사도 기반으로 주제를 검색"
+                />
+                <button onclick="performVectorSubjectSearch()">검색</button>
+              </div>
+              <div class="search-options">
+                <div class="option-group">
+                  <label for="vector-subject-limit">결과 개수:</label>
+                  <select id="vector-subject-limit">
+                    <option value="10">10개</option>
+                    <option value="25" selected>25개</option>
+                    <option value="50">50개</option>
+                    <option value="100">100개</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- 검색 결과 -->
+            <div class="results-section">
+              <div id="search-subject-info" class="search-info"></div>
+              <div id="loading-subject" class="loading">검색 중...</div>
+              <div id="results-subject-container"></div>
+
+              <!-- 페이지네이션 -->
+              <div id="pagination-subject" class="pagination"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 챗봇 섹션 -->
+        <div id="chatbot-section" class="content-section">
+          <header class="content-header">
+            <h1>AI 챗봇</h1>
+            <p>도서 관련 질문에 AI가 답변해드립니다</p>
+          </header>
+
+          <div class="chatbot-container">
+            <div class="chatbot-header">
+              <div class="chatbot-status" id="chatbot-status">
+                <span class="status-indicator" id="status-indicator">●</span>
+                <span id="status-text">연결 확인 중...</span>
+              </div>
+
+              <button
+                class="new-chat-button"
+                onclick="startNewChat()"
+                title="새 채팅 시작"
+              >
+                새로운 채팅
+              </button>
+            </div>
+
+            <div class="chat-messages" id="chat-messages">
+              <div class="message bot-message">
+                <div class="message-content">
+                  안녕하세요! 도서관과 주제명표목에 대한 질문이 있으시면 언제든
+                  물어보세요.
+                </div>
+                <div class="message-time"></div>
+              </div>
+            </div>
+
+            <div class="chat-input-container">
+              <div class="chat-input-group">
+                <textarea
+                  id="chat-input"
+                  placeholder="메시지를 입력하세요..."
+                  rows="1"
+                ></textarea>
+                <button id="send-button" onclick="sendMessage()" disabled>
+                  <span class="send-icon">➤</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 도서 상세 페이지 섹션 -->
+        <div id="book-detail-page" class="content-section">
+          <header class="content-header">
+            <div class="header-with-back">
+              <h1 id="book-detail-page-title">도서 상세 정보</h1>
+              <button class="back-button" onclick="goBackFromBookDetail()">
+                ← 돌아가기
+              </button>
+            </div>
+          </header>
+
+          <!-- 도서 상세 내용 -->
+          <div id="book-detail-content" class="book-detail-content">
+            <!-- 도서 상세 정보가 여기에 표시됩니다 -->
+          </div>
+        </div>
+
+        <!-- 주제 상세 페이지 섹션 -->
+        <div id="subject-detail-page" class="content-section">
+          <header class="content-header">
+            <div class="header-with-back">
+          
+              <h1 id="subject-detail-page-title">주제 상세 정보</h1>
+              <button class="back-button" onclick="goBackFromSubjectDetail()">
+                ← 돌아가기
+              </button>
+            </div>
+          </header>
+
+          <!-- 주제 상세 내용 -->
+          <div id="subject-detail-content" class="subject-detail-content">
+            <!-- 주제 상세 정보가 여기에 표시됩니다 -->
+          </div>
+        </div>
+
+        <!-- 주제 네트워크 탐색 섹션 -->
+        <div id="network-section" class="content-section">
+          <header class="content-header">
+            <h1>주제 네트워크 탐색</h1>
+            <p>주제들 간의 연관성을 시각적으로 탐색해보세요</p>
+          </header>
+
+          <!-- 네트워크 검색 및 제어 -->
+          <div class="network-controls">
+            <div class="seed-search">
+              <div class="search-input-group">
+                <input
+                  type="text"
+                  id="seed-query"
+                  placeholder="탐색을 시작할 주제를 입력하세요..."
+                />
+                <button onclick="searchSeedNode()">씨앗 노드 검색</button>
+              </div>
+              <div id="seed-candidates" class="seed-candidates"></div>
+            </div>
+
+            <div class="network-actions">
+              <button id="reset-network" onclick="resetNetwork()">
+                네트워크 리셋
+              </button>
+              <div class="expansion-settings">
+                <label for="max-expansion-nodes">최대 확장 노드:</label>
+                <select id="max-expansion-nodes">
+                  <option value="3">3개</option>
+                  <option value="5" selected>5개</option>
+                  <option value="7">7개</option>
+                  <option value="10">10개</option>
+                </select>
+              </div>
+              <div class="network-info">
+                <span id="node-count">노드: 0개</span>
+                <span id="edge-count">연결: 0개</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 네트워크 시각화 영역 -->
+          <div class="network-container">
+            <div id="network-visualization"></div>
+            <div id="network-tooltip" class="network-tooltip"></div>
+          </div>
+        </div>
+      </main>
+
+      <!-- 도서 상세 모달 -->
+      <div id="book-modal" class="modal">
+        <div class="modal-content">
+          <span class="close" onclick="closeModal('book')">&times;</span>
+          <div id="book-details"></div>
+        </div>
+      </div>
+
+      <!-- 주제 상세 모달 -->
+      <div id="subject-modal" class="modal">
+        <div class="modal-content">
+          <span class="close" onclick="closeModal('subject')">&times;</span>
+          <div id="subject-details"></div>
+        </div>
+      </div>
+
+      <!-- 주제 탐색 모달 -->
+      <div id="subject-explore-modal" class="modal subject-explore-modal">
+        <div class="modal-content">
+          <span class="close" onclick="closeModal('subject-explore')">&times;</span>
+          <div id="subject-explore-content"></div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>

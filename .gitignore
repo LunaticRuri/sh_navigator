@@ -14,6 +14,9 @@ data/
 # Ignore Backup files
 backup/
 
+# Ignore CSV files
+*.csv
+
 # Ignore Documentation files
 docs/
 
@@ -23,3 +26,6 @@ Thumbs.db
 
 # Environment files
 .env
+
+# Ignore Playground files
+playground.py

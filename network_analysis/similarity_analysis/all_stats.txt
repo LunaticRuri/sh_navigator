@@ -1,0 +1,14 @@
+Total documents processed: 257541
+average similarity: 0.28598108887672424  ± 0.032593194395303726
+average variance: 0.004473994020372629  ± 0.001257413881830871
+Variance of variance: 1.5810895774848177e-06
+95th percentile average similarity: 0.4333977997303009
+99th percentile average similarity: 0.49131670594215393
+99.9th percentile average similarity: 0.5721595287322998
+99.99th percentile average similarity: 0.6595824956893921
+Average top-10 similarity: 0.6984458565711975
+Average top-50 similarity: 0.6335809826850891
+Average top-100 similarity: 0.6069616079330444
+Standard deviation of top-10 similarity: 0.018198616802692413
+Standard deviation of top-50 similarity: 0.012927628122270107
+Standard deviation of top-100 similarity: 0.01105913519859314

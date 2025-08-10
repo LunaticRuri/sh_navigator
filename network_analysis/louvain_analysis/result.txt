@@ -1,0 +1,59 @@
+============================================================
+ANALYSIS WITH SIMILARITY THRESHOLD: 0.7, RESOLUTION: 0.3, MIN RELATIONS: 10
+MAX COMMUNITY SIZE: 300, MIN COMMUNITY SIZE: 10
+============================================================
+Loading similarity data...
+Building network from top-N similarities...
+Number of documents: 257541
+Minimum similarity threshold: 0.7
+Adding edges: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 257541/257541 [00:09<00:00, 28228.11it/s]
+Created network with 257541 nodes and 2000396 edges
+Edge density: 0.000060
+
+============================================================
+NETWORK ANALYSIS RESULTS
+============================================================
+
+Basic Network Statistics:
+  Nodes: 257,541
+  Edges: 2,000,396
+  Density: 0.000060
+  Is connected: True
+  Connected components: 1
+
+Hierarchical Louvain Community Detection (target size <= 300):
+  Initial Modularity: 0.760435
+  Final Modularity: 0.561158
+  Number of communities: 7656
+  Average community size: 33.64
+  Largest community size: 894
+  Standard deviation of community sizes: 35.83
+  Community size distribution: [894, 453, 423, 422, 418, 306, 302, 299, 298, 298]
+  WARNING: 7 communities still larger than 300 nodes
+  Largest remaining: 894
+
+Community Size Histogram:
+  <=     5:     0
+  <=    10:   381
+  <=    25:  3957
+  <=    50:  2140
+  <=    75:   605
+  <=   100:   258
+  <=   200:   245
+  <=   300:    63
+  <=   400:     2
+  <=   500:     4
+  <=  1000:     1
+  <=  5000:     0
+
+Top 5 Largest Communities:
+  Community 749: 894 nodes, density=0.0133, avg_sim=0.7211
+    Sample docs: ['nlk:KSH2000003407', 'nlk:KSH1998002620', 'nlk:KSH1999007191', 'nlk:KSH1998036115', 'nlk:KSH2003002785', 'nlk:KSH2004039398', 'nlk:KSH2000001797', 'nlk:KSH1999012643', 'nlk:KSH2000023548', 'nlk:KSH2001019983']
+  Community 366: 453 nodes, density=0.0223, avg_sim=0.7119
+    Sample docs: ['nlk:KSH2001016194', 'nlk:KSH2000019657', 'nlk:KSH2004032070', 'nlk:KSH2002032553', 'nlk:KSH2000019704', 'nlk:KSH2004000999', 'nlk:KSH2006000378', 'nlk:KSH1999021139', 'nlk:KSH2001025358', 'nlk:KSH1998038068']
+  Community 2817: 423 nodes, density=0.0246, avg_sim=0.7082
+    Sample docs: ['nlk:KSH2002035236', 'nlk:KSH2002025455', 'nlk:KSH2001000834', 'nlk:KSH2002012975', 'nlk:KSH2001014067', 'nlk:KSH2002004088', 'nlk:KSH2003005636', 'nlk:KSH2000038179', 'nlk:KSH2004026354', 'nlk:KSH2000028477']
+  Community 5667: 422 nodes, density=0.0308, avg_sim=0.7338
+    Sample docs: ['nlk:KSH2000021674', 'nlk:KSH2004017123', 'nlk:KSH2000008609', 'nlk:KSH2002041146', 'nlk:KSH2002022894', 'nlk:KSH1999006201', 'nlk:KSH1998022464', 'nlk:KSH2000023086', 'nlk:KSH2000008267', 'nlk:KSH2006001055']
+  Community 8928: 418 nodes, density=0.0184, avg_sim=0.6950
+    Sample docs: ['nlk:KSH2020000587', 'nlk:KSH2001023895', 'nlk:KSH2001019557', 'nlk:KSH1999015528', 'nlk:KSH1998024287', 'nlk:KSH2001018149', 'nlk:KSH2000011836', 'nlk:KSH2002029245', 'nlk:KSH2000001072', 'nlk:KSH1998018830']
