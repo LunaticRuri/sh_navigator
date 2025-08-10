@@ -1,0 +1,25 @@
+# VS Code settings folder
+.vscode/
+.VSCodeCounter/
+
+# Ignore Python cache files
+__pycache__/
+
+# Ignore Python virtual environments
+venv/
+
+# Ignore Database files
+data/
+
+# Ignore Backup files
+backup/
+
+# Ignore Documentation files
+docs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
