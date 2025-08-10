@@ -96,7 +96,6 @@ def search_similar(request: SearchRequest):
         
         faiss_ids = indices[0]
 
-        # 여기서 Faiss ID를 ISBN으로 변환
         retrieved_isbns = [
             isbn_map[i] for i in faiss_ids
             if i in isbn_map
@@ -129,7 +128,6 @@ def search_similar(request: SearchRequest):
         
         faiss_ids = indices[0]
 
-        # 여기서 Faiss ID를 ISBN으로 변환
         retrieved_node_ids = [
             node_id_map[i] for i in faiss_ids
             if i in node_id_map
