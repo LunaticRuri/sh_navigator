@@ -15,13 +15,8 @@ load_dotenv(dotenv_path="/home/namu101/msga/env")
 DATA_DIR = "/home/namu101/msga/data"
 
 # Database Paths
-DATABASE_PATH = os.path.join(DATA_DIR, 'sh_navigator.db')  # 통합된 단일 데이터베이스
+DATABASE_PATH = os.path.join(DATA_DIR, 'sh_navigator.db')
 KDC_DB_PATH = os.path.join(DATA_DIR, 'kdc_sections', 'sections.db')
-
-# 기존 분리된 DB 경로들 (호환성을 위해 유지, 향후 제거 예정)
-# BOOKS_DB_PATH = os.path.join(DATA_DIR, 'books.db')
-# SUBJECTS_DB_PATH = os.path.join(DATA_DIR, 'subject_headings.db')
-
 
 # FAISS Index Paths
 BOOKS_FAISS_INDEX_PATH = os.path.join(DATA_DIR, 'faiss/book_faiss_index.faiss')
@@ -41,9 +36,9 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODEL = "gemini-2.5-flash"
 
 # Database Connection Pool Configuration
-DB_POOL_MAX_CONNECTIONS = int(os.getenv("DB_POOL_MAX_CONNECTIONS", "20"))
-DB_POOL_MIN_CONNECTIONS = int(os.getenv("DB_POOL_MIN_CONNECTIONS", "2"))
-DB_CONNECTION_TIMEOUT = int(os.getenv("DB_CONNECTION_TIMEOUT", "30"))
+DB_POOL_MAX_CONNECTIONS = 20
+DB_POOL_MIN_CONNECTIONS = 2
+DB_CONNECTION_TIMEOUT = 30
 
 # Chat Session Configuration
 SESSION_TIMEOUT = 1800  # 30 minutes in seconds

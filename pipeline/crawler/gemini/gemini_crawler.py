@@ -7,14 +7,11 @@ from typing import List, Dict, Optional
 from google import genai
 from google.generativeai import GenerateContentConfig
 from crawler.crawler_status import CrawlerStatus
+from config import GEMINI_API_KEY, GEMINI_MODEL
 
-# Load environment variables from .env file
-load_dotenv()
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s - %(module)s @ %(funcName)s")
-
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
-GEMINI_MODEL = "gemini-2.5-flash" # Adjust as needed
 
 
 def _generate_summaries_query(books: List[Dict[str, str]]) -> str:
@@ -116,7 +113,6 @@ def _fill_blank_summaries(books: List[Dict[str, str]], query: str):
     # books is a list of dicts with keys: id, isbn, title, summary
     for book, res in zip(books, results):
         book.update({'summary': res['summary']})
-    print(books)
     for book in books:
         logging.info(f"Book {book['isbn']} summary: {book['summary']}")
         summary = book.get('summary', '')

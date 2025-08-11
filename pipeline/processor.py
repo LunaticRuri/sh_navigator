@@ -5,14 +5,12 @@ from datetime import datetime
 import torch
 import os
 import logging
+from config import EMBEDDING_MODEL
 
-
-
-MODEL_NAME = "nlpai-lab/KURE-v1"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s - %(module)s @ %(funcName)s")
 
-embedding_model = SentenceTransformer(MODEL_NAME, device='cuda' if torch.cuda.is_available() else 'cpu')
+embedding_model = SentenceTransformer(EMBEDDING_MODEL, device='cuda' if torch.cuda.is_available() else 'cpu')
 
 def process_and_embed(pipeline_db_path: str):
 
@@ -21,7 +19,7 @@ def process_and_embed(pipeline_db_path: str):
         raise FileNotFoundError("Pipeline database does not exist.")
 
     logging.info("Processing and embedding books...")
-    logging.info(f"Using embedding model: {MODEL_NAME}")
+    logging.info(f"Using embedding model: {EMBEDDING_MODEL}")
     logging.info(f"Using device: {'cuda' if torch.cuda.is_available() else 'cpu'}")
     
     conn = sqlite3.connect(pipeline_db_path)

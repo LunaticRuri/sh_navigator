@@ -2,12 +2,9 @@ import time
 import requests
 from bs4 import BeautifulSoup
 import logging
-from dotenv import load_dotenv
 from typing import Optional, Dict, Any, Tuple, List
 from crawler.crawler_status import CrawlerStatus
 
-# Load environment variables from .env file
-load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s - %(module)s @ %(funcName)s")

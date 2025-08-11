@@ -7,15 +7,12 @@ from dotenv import load_dotenv
 import os
 import logging
 from typing import Dict, List, Any
-
-# Load environment variables from .env file
-load_dotenv()
+from config import DATA4LIBRARY_API_KEY
 
 # Configure logging for the script
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s - %(module)s @ %(funcName)s")
 
 # Retrieve API key from environment variables
-DATA4LIBRARY_API_KEY = os.getenv('DATA4LIBRARY_API_KEY')
 
 def _get_target_libraries(library_db_path: str, n_weeks: int = 1) -> List[str]:
     """

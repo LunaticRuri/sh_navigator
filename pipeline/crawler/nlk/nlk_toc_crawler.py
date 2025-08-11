@@ -16,25 +16,13 @@ import time
 import re
 import json
 from cffi import FFI
-from dotenv import load_dotenv
 import logging
 from crawler.crawler_status import CrawlerStatus
-
+from config import NLK_API_KEY
 
 
 # Configure logging for the script
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s - %(module)s @ %(funcName)s")
-
-# Load environment variables from .env file
-load_dotenv()
-
-
-
-# =========================
-# Config & Constants
-# =========================
-
-NLK_API_KEY = os.getenv('NLK_API_KEY')
 
 # =========================
 # HTTP Utilities

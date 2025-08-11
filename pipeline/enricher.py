@@ -38,7 +38,7 @@ def _update_pipeline_db(cursor, record_id: str, intro: str, toc: str, subjects: 
     """, (intro, toc, json.dumps(subjects, ensure_ascii=False), status, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), record_id))
     cursor.connection.commit()
 
-def enrich_books(pipeline_db_path: str, books_db_path: str, gemini_search_grounding: bool = False):
+def enrich_books(pipeline_db_path: str, main_db_path: str, gemini_search_grounding: bool = False):
     """
     Enrich books in the pipeline database by crawling external sources for intro and TOC.
     Args:
@@ -50,14 +50,14 @@ def enrich_books(pipeline_db_path: str, books_db_path: str, gemini_search_ground
     if not os.path.exists(pipeline_db_path):
         logging.error("Pipeline database does not exist.")
         raise FileNotFoundError("Pipeline database does not exist.")
-    if not os.path.exists(books_db_path):
+    if not os.path.exists(main_db_path):
         logging.error("Book database does not exist.")
         raise FileNotFoundError("Book database does not exist.")
 
     pipeline_conn = sqlite3.connect(pipeline_db_path)
     pipeline_cursor = pipeline_conn.cursor()
 
-    book_conn = sqlite3.connect(books_db_path)
+    book_conn = sqlite3.connect(main_db_path)
     book_cursor = book_conn.cursor()
 
 

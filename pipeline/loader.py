@@ -12,7 +12,7 @@ import pickle
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s - %(module)s @ %(funcName)s")
 
 
-def save_embeddings(pipeline_db_path: str, embeddings_db_path: str):
+def save_embeddings(main_db_path: str, pipeline_db_path: str):
     """ Save processed book embeddings to the embeddings database."""
     
     logging.info("Saving embeddings to the database...")
@@ -20,59 +20,58 @@ def save_embeddings(pipeline_db_path: str, embeddings_db_path: str):
     if not os.path.exists(pipeline_db_path):
         logging.error("Pipeline database does not exist.")
         raise FileNotFoundError("Pipeline database does not exist.")
-    if not os.path.exists(embeddings_db_path):
-        logging.error("Embeddings database does not exist.")
-        raise FileNotFoundError("Embeddings database does not exist.")
+    if not os.path.exists(main_db_path):
+        logging.error("Main database does not exist.")
+        raise FileNotFoundError("Main database does not exist.")
     
     try:
         pipeline_conn = sqlite3.connect(pipeline_db_path)
         pipeline_cursor = pipeline_conn.cursor()
-        embeddings_conn = sqlite3.connect(embeddings_db_path)
-        embeddings_cursor = embeddings_conn.cursor()
+        main_conn = sqlite3.connect(main_db_path)
+        main_cursor = main_conn.cursor()
     except sqlite3.Error as e:
         logging.error(f"Error connecting to SQLite database: {e}")
         return
     
-    pipeline_cursor.execute("SELECT id, isbn, embedding FROM book_pipeline WHERE status = 'processed'")
+    pipeline_cursor.execute("SELECT id, isbn, title, intro, toc, embedding FROM book_pipeline WHERE status = 'processed'")
     books_to_load = pipeline_cursor.fetchall()
     
-    for record_id, isbn, embedding_blob in books_to_load:
+    for record_id, isbn, title, intro, toc, embedding_blob in books_to_load:
         if not embedding_blob:
             logging.warning(f"Record ID {record_id} - ISBN {isbn} has no embedding data, skipping.")
             continue
         
-        # TODO: Check embeddings' table name.
-        embeddings_cursor.execute("""
-            INSERT INTO books (record_id, isbn, embedding)
+        doc = f"{title}\n{intro or ''}\n{toc or ''}"
+        main_cursor.execute("""
+            INSERT OR IGNORE INTO book_embeddings (isbn, doc, embedding)
             VALUES (?, ?, ?)
-        """, (record_id, isbn, embedding_blob))
-        embeddings_conn.commit()
+        """, (isbn, doc, embedding_blob))
+        main_conn.commit()
         
         pipeline_cursor.execute("UPDATE book_pipeline SET status = ?, last_updated = ? WHERE id = ?", ('loaded', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), record_id))
         pipeline_conn.commit()
-        logging.info(f"{record_id} - {isbn} loaded to ChromaDB successfully.")
+        logging.info(f"{record_id} - {isbn} loaded main database successfuly.")
     
     pipeline_conn.close()
-    embeddings_conn.close()
+    main_conn.close()
 
     logging.info("Embeddings saved successfully.")
 
-def rebuild_faiss_index(embeddings_db_path: str, faiss_index_path: str, isbn_map_path: str):
+def rebuild_faiss_index(main_db_path: str, faiss_index_path: str, isbn_map_path: str):
     """ Rebuild the FAISS index with embeddings from the database."""
 
-    if not os.path.exists(embeddings_db_path):
-        raise FileNotFoundError(f"Embeddings DB not found: {embeddings_db_path}")
+    if not os.path.exists(main_db_path):
+        raise FileNotFoundError(f"Main DB not found: {main_db_path}")
     if not os.path.exists(faiss_index_path):
         raise FileNotFoundError(f"FAISS index file not found: {faiss_index_path}")
     if not os.path.exists(isbn_map_path):
         raise FileNotFoundError(f"ISBN map file not found: {isbn_map_path}")
 
-    # TODO: Consider using batch processing for large datasets.
-    conn = sqlite3.connect(embeddings_db_path)
-    cursor = conn.cursor()
-    cursor.execute("SELECT isbn, embedding FROM books")
-    rows = cursor.fetchall()
-    conn.close()
+    main_conn = sqlite3.connect(main_db_path)
+    main_cursor = main_conn.cursor()
+    main_cursor.execute("SELECT isbn, embedding FROM book_embeddings")
+    rows = main_cursor.fetchall()
+    main_conn.close()
 
     if not rows:
         raise ValueError("No embeddings found in the embeddings database.")
@@ -109,7 +108,7 @@ def rebuild_faiss_index(embeddings_db_path: str, faiss_index_path: str, isbn_map
     logging.info("Index construction completed.")
 
 
-def load_to_books_db(pipeline_db_path: str, books_db_path: str):
+def load_to_books_db(pipeline_db_path: str, main_db_path: str):
     """
     Load processed books from the pipeline database to the main SQLite database.
     Args:
@@ -119,7 +118,7 @@ def load_to_books_db(pipeline_db_path: str, books_db_path: str):
     if not os.path.exists(pipeline_db_path):
         logging.error("Pipeline database does not exist.")
         raise FileNotFoundError("Pipeline database does not exist.")
-    if not os.path.exists(books_db_path):
+    if not os.path.exists(main_db_path):
         logging.error("Main database does not exist.")
         raise FileNotFoundError("Main database does not exist.")
     
@@ -137,7 +136,7 @@ def load_to_books_db(pipeline_db_path: str, books_db_path: str):
     )
     books_to_load = pipeline_cursor.fetchall()
     
-    books_conn = sqlite3.connect(books_db_path)
+    books_conn = sqlite3.connect(main_db_path)
     books_cursor = books_conn.cursor()
     
     for record_id, libcode, isbn, title, publication_year, kdc, intro, toc, nlk_subjects in books_to_load:
@@ -186,10 +185,3 @@ def load_to_books_db(pipeline_db_path: str, books_db_path: str):
     books_conn.close()
 
     logging.info("Books loaded to the main database successfully.")
-
-if __name__ == "__main__":
-    rebuild_faiss_index(
-        embeddings_db_path='path/to/embeddings.db',
-        faiss_index_path='path/to/faiss.index',
-        isbn_map_path='path/to/isbn_map.pkl'
-    )

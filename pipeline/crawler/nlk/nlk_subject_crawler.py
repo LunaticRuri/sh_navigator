@@ -20,14 +20,9 @@ from typing import List, Dict, Any
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from crawler.crawler_status import CrawlerStatus
+from config import NLK_API_KEY
 
-# =========================
-# Config & Constants
-# =========================
 
-# Load environment variables from .env file
-load_dotenv()
-NLK_API_KEY = os.getenv('NLK_API_KEY')
 
 # Configure logging for the script
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s - %(module)s @ %(funcName)s")
