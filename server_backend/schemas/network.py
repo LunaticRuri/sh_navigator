@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 
 class NetworkNode(BaseModel):
@@ -7,6 +7,7 @@ class NetworkNode(BaseModel):
     node_id: str = Field(..., description="Node identifier")
     label: str = Field(..., description="Node label")
     definition: str = Field(default="", description="Node definition")
+    community: int = Field(default=0, description="Community identifier")
     type: str = Field(..., description="Node type (current/neighbor)")
 
 
@@ -15,7 +16,7 @@ class NetworkEdge(BaseModel):
     source: str = Field(..., description="Source node ID")
     target: str = Field(..., description="Target node ID")
     relation_type: str = Field(..., description="Type of relationship")
-    metadata: Optional[str] = Field(None, description="Additional metadata")
+    metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata")
 
 
 class NetworkResponse(BaseModel):

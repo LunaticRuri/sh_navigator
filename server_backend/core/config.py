@@ -33,6 +33,9 @@ NODE_ID_MAP_PATH = os.path.join(DATA_DIR, 'faiss/subject_node_id_map.pkl')
 MODEL_NAME = "nlpai-lab/KURE-v1"
 MODEL_SERVER_URL = "http://127.0.0.1:8001"
 
+# Network Interaction Server Configuration
+NETWORK_SERVER_URL = "http://127.0.0.1:8002"
+
 # Gemini API Configuration
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODEL = "gemini-2.5-flash"

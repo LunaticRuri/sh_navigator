@@ -4,7 +4,7 @@ import networkx as nx
 import json
 import os
 from tqdm import tqdm
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, List
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -26,7 +26,7 @@ class NetworkModelCache:
     """
     
     def __init__(self):
-        self._graph: Optional[nx.Graph] = None
+        self._graph: Optional[nx.MultiDiGraph] = None
         self._initialized = False
     
     async def initialize(self):
@@ -41,15 +41,15 @@ class NetworkModelCache:
             if not os.path.exists(DATABASE_PATH):
                 logger.error(f"Database file not found: {DATABASE_PATH}")
                 # 빈 그래프로 초기화
-                self._graph = nx.Graph()
+                self._graph = nx.MultiDiGraph()
                 self._initialized = True
                 return
             
             async with aiosqlite.connect(DATABASE_PATH) as conn:
                 conn.row_factory = aiosqlite.Row
                 
-                # NetworkX 그래프 생성 (무방향 그래프)
-                self._graph = nx.Graph()
+                # NetworkX 그래프 생성
+                self._graph = nx.MultiDiGraph()
                 
                 # 노드 로드 (subjects 테이블에서)
                 cursor = await conn.cursor()
@@ -98,6 +98,7 @@ class NetworkModelCache:
                         relation['source_id'],
                         relation['target_id'],
                         relation_type=relation['relation_type'],
+                        key=relation['relation_type'],
                         **metadata
                     )
                 
@@ -109,15 +110,15 @@ class NetworkModelCache:
         except Exception as e:
             logger.error(f"Failed to initialize network graph cache: {e}")
             # 실패 시 빈 그래프로 초기화
-            self._graph = nx.Graph()
+            self._graph = nx.MultiDiGraph()
             self._initialized = True
     
-    def get_graph(self) -> Optional[nx.Graph]:
+    def get_graph(self) -> Optional[nx.MultiDiGraph]:
         """
         전체 네트워크 그래프 반환
         
         Returns:
-            NetworkX Graph 객체 또는 None
+            NetworkX MultiDiGraph 객체 또는 None
         """
         if not self._initialized:
             return None
@@ -141,15 +142,16 @@ class NetworkModelCache:
         
         return dict(self._graph.nodes[node_id])
     
-    def get_node_neighbors(self, node_id: str) -> Optional[Dict[str, Dict[str, Any]]]:
+    def get_node_neighbors(self, node_id: str, relation_type: Optional[str] = None) -> Optional[Dict[str, List[Dict[str, Any]]]]:
         """
         특정 노드의 이웃 노드들과 연결 정보 반환
         
         Args:
             node_id: 노드 ID
+            relation_type: 특정 관계 타입만 필터링 (선택사항)
             
         Returns:
-            이웃 노드 정보 딕셔너리 {neighbor_id: {node_info, edge_info}}
+            이웃 노드 정보 딕셔너리 {neighbor_id: [edge_info_list]}
         """
         if not self._initialized or self._graph is None:
             return None
@@ -157,25 +159,35 @@ class NetworkModelCache:
         if node_id not in self._graph.nodes():
             return None
         
-        neighbors = {}
-        for neighbor in self._graph.neighbors(node_id):
-            edge_data = self._graph[node_id][neighbor]
-            node_data = dict(self._graph.nodes[neighbor])
+        nodes = []
+        edges = []
+        for neighbor_id in self._graph.neighbors(node_id):
+            node_data = dict(self._graph.nodes[neighbor_id])
+            node_data['node_id'] = neighbor_id
+            nodes.append(node_data)
             
-            neighbors[neighbor] = {
-                'node_info': node_data,
-                'edge_info': edge_data
-            }
+            # MultiDiGraph에서 같은 노드 쌍 간의 모든 엣지 가져오기
+            for edge_key, edge_data in self._graph[node_id][neighbor_id].items():
+                # relation_type 필터링
+                if relation_type and edge_data.get('relation_type') != relation_type:
+                    continue
+                
+                edges.append({
+                    'source_id': node_id,
+                    'target_id': neighbor_id,
+                    **edge_data
+                })
         
-        return neighbors
+        return nodes, edges
     
-    def get_shortest_path(self, source_id: str, target_id: str) -> Optional[list]:
+    def get_shortest_path(self, source_id: str, target_id: str, relation_type: Optional[str] = None) -> Optional[list]:
         """
         두 노드 간의 최단 경로 반환
         
         Args:
             source_id: 시작 노드 ID
             target_id: 목표 노드 ID
+            relation_type: 특정 관계 타입만 사용 (선택사항)
             
         Returns:
             최단 경로 노드 리스트 또는 None
@@ -187,7 +199,23 @@ class NetworkModelCache:
             return None
         
         try:
-            path = nx.shortest_path(self._graph, source_id, target_id)
+            # 특정 relation_type만 사용하는 경우 서브그래프 생성
+            if relation_type:
+                # 해당 relation_type을 가진 엣지만 포함하는 서브그래프 생성
+                filtered_edges = []
+                for u, v, key, data in self._graph.edges(keys=True, data=True):
+                    if data.get('relation_type') == relation_type:
+                        filtered_edges.append((u, v))
+                
+                # 필터링된 엣지로 새 그래프 생성
+                subgraph = nx.DiGraph()
+                subgraph.add_nodes_from(self._graph.nodes())
+                subgraph.add_edges_from(filtered_edges)
+                
+                path = nx.shortest_path(subgraph, source_id, target_id)
+            else:
+                path = nx.shortest_path(self._graph, source_id, target_id)
+            
             return path
         except nx.NetworkXNoPath:
             return None
@@ -242,8 +270,8 @@ class NetworkModelCache:
         stats = {
             'total_nodes': self._graph.number_of_nodes(),
             'total_edges': self._graph.number_of_edges(),
-            'is_connected': nx.is_connected(self._graph),
-            'number_of_components': nx.number_connected_components(self._graph),
+            'is_connected': nx.is_weakly_connected(self._graph),
+            'number_of_components': nx.number_weakly_connected_components(self._graph),
             'density': nx.density(self._graph)
         }
         
@@ -260,7 +288,92 @@ class NetworkModelCache:
                 communities.add(community)
         stats['communities'] = len(communities)
         
+        # relation_type별 엣지 수 통계
+        relation_stats = {}
+        for _, _, data in self._graph.edges(data=True):
+            rel_type = data.get('relation_type', 'unknown')
+            relation_stats[rel_type] = relation_stats.get(rel_type, 0) + 1
+        
+        stats['relation_types'] = relation_stats
+        
         return stats
+    
+    def get_edges_between_nodes(self, node1: str, node2: str, relation_type: Optional[str] = None) -> Optional[List[Dict[str, Any]]]:
+        """
+        두 노드 간의 모든 엣지 반환
+        
+        Args:
+            node1: 첫 번째 노드 ID
+            node2: 두 번째 노드 ID
+            relation_type: 특정 관계 타입만 필터링 (선택사항)
+            
+        Returns:
+            엣지 정보 리스트
+        """
+        if not self._initialized or self._graph is None:
+            return None
+        
+        if node1 not in self._graph.nodes() or node2 not in self._graph.nodes():
+            return None
+        
+        if not self._graph.has_edge(node1, node2):
+            return []
+        
+        edges = []
+        for edge_key, edge_data in self._graph[node1][node2].items():
+            if relation_type and edge_data.get('relation_type') != relation_type:
+                continue
+            
+            edges.append({
+                'edge_key': edge_key,
+                'edge_info': edge_data
+            })
+        
+        return edges
+    
+    def get_relation_types(self) -> Optional[List[str]]:
+        """
+        그래프에 존재하는 모든 relation_type 반환
+        
+        Returns:
+            relation_type 리스트
+        """
+        if not self._initialized or self._graph is None:
+            return None
+        
+        relation_types = set()
+        for _, _, data in self._graph.edges(data=True):
+            if 'relation_type' in data:
+                relation_types.add(data['relation_type'])
+        
+        return list(relation_types)
+    
+    def get_nodes_with_relation_type(self, relation_type: str) -> Optional[List[Dict[str, Any]]]:
+        """
+        특정 relation_type을 가진 엣지와 연결된 모든 노드들 반환
+        
+        Args:
+            relation_type: 찾을 관계 타입
+            
+        Returns:
+            노드 정보 리스트
+        """
+        if not self._initialized or self._graph is None:
+            return None
+        
+        connected_nodes = set()
+        for u, v, data in self._graph.edges(data=True):
+            if data.get('relation_type') == relation_type:
+                connected_nodes.add(u)
+                connected_nodes.add(v)
+        
+        result = []
+        for node_id in connected_nodes:
+            node_data = dict(self._graph.nodes[node_id])
+            node_data['node_id'] = node_id
+            result.append(node_data)
+        
+        return result
     
     async def refresh(self):
         """캐시 새로고침"""

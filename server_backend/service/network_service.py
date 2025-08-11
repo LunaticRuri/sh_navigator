@@ -4,8 +4,8 @@ import httpx
 from typing import List, Dict
 from fastapi import HTTPException
 from database.database_manager import DatabaseManager
-from core.kdc_cache import get_kdc_cache
-from schemas.network import NetworkResponse, SeedNodeResponse
+from core.config import NETWORK_SERVER_URL
+from schemas.network import NetworkResponse, SeedNodeResponse, NetworkEdge, NetworkNode
 
 from core.config import MAX_NETWORK_NEIGHBORS
 
@@ -25,12 +25,11 @@ class NetworkService:
         """
         self.http_client = httpx.AsyncClient(timeout=10.0)
         self.database_manager = database_manager
-        self.kdc_cache = get_kdc_cache()
     
         
     async def get_node_neighbors(self, node_id: str, limit: int = 10) -> NetworkResponse:
         """
-        Get neighbors of a specific node for network visualization.
+        Get neighbors of a specific node.
         
         Args:
             node_id: Central node ID
@@ -41,56 +40,69 @@ class NetworkService:
         """
         try:
             # Validate limit
-            limit = min(limit, MAX_NETWORK_NEIGHBORS)
+            limit = min(limit, MAX_NETWORK_NEIGHBORS)            
+
+            # Get current node information from the network interaction server
+            response = await self.http_client.get(
+                f"{NETWORK_SERVER_URL}/node/info",
+                params={"node_id": node_id}
+            )
+            response.raise_for_status()
+            data = response.json()
+            if not data or "info" not in data or not data["info"]:
+                raise HTTPException(status_code=404, detail="노드 정보를 찾을 수 없습니다.")
             
-            async with self.database_manager.get_connection() as conn:
-                cursor = await conn.cursor()
-                
-                # Get current node information
-                await cursor.execute(
-                    "SELECT node_id, label, definition FROM subjects WHERE node_id = ?", 
-                    (node_id,)
+            nodes = [
+                NetworkNode(
+                    node_id=node_id,
+                    label=data['info']['label'],
+                    definition=data['info'].get('definition', ""),
+                    community=data['info'].get('community', 0),
+                    type="current"
                 )
-                current_node = await cursor.fetchone()
-                
-                if not current_node:
-                    raise HTTPException(status_code=404, detail="노드를 찾을 수 없습니다.")
-                
-                
-                neighbors = await self._get_node_neighbors(cursor, node_id, limit)
-                
-                # Build network response
-                nodes = [
-                    {
-                        "node_id": current_node["node_id"],
-                        "label": current_node["label"],
-                        "definition": current_node["definition"] or "",
-                        "type": "current"
-                    }
-                ]
-                
-                edges = []
-                
-                for neighbor in neighbors:
-                    nodes.append({
-                        "node_id": neighbor["neighbor_id"],
-                        "label": neighbor["label"],
-                        "definition": neighbor["definition"] or "",
-                        "type": "neighbor"
-                    })
-                    
-                    edges.append({
-                        "source": node_id,
-                        "target": neighbor["neighbor_id"],
-                        "relation_type": neighbor["relation_type"],
-                        "metadata": neighbor["metadata"]
-                    })
-                
-                return {
-                    "nodes": nodes,
-                    "edges": edges,
-                    "center_node": node_id
-                }
+            ]
+
+            # Get neighbors from the network interaction server
+            response = await self.http_client.get(
+                f"{NETWORK_SERVER_URL}/node/neighbors",
+                params={"node_id": node_id}
+            )
+
+            response.raise_for_status()
+            data = response.json()
+            
+            if not data:
+                return NetworkResponse(nodes=[], edges=[], center_node=node_id)
+
+            edges = []
+            
+            for node in data['nodes']:
+                nodes.append(
+                    NetworkNode(
+                        node_id = node["node_id"],
+                        label = node["label"],
+                        definition = node["definition"] or "",
+                        community = node.get('community', 0),
+                        type = "neighbor"
+                    )
+                )
+
+            for edge in data['edges']:
+                edge_data = NetworkEdge(
+                    source=edge["source_id"],
+                    target=edge["target_id"],
+                    relation_type=edge["relation_type"],
+                    metadata={k: v for k, v in edge.items() if k not in ("source_id", "target_id", "relation_type")}
+                )
+                edges.append(edge_data)
+            
+            edges = edges[:limit]  # Limit the number of edges
+
+            return NetworkResponse(
+                nodes=nodes,
+                edges=edges,
+                center_node=node_id
+            )
                 
         except HTTPException:
             raise
@@ -137,49 +149,6 @@ class NetworkService:
         except Exception as e:
             logger.error(f"Error searching seed nodes: {e}")
             raise HTTPException(status_code=500, detail="씨앗 노드 검색 중 오류가 발생했습니다.")
-
-    async def _get_node_neighbors(self, cursor, node_id: str, limit: int) -> List[Dict]:
-        """
-        Get neighbor nodes for network visualization and kdc access points.
-        
-        Args:
-            cursor: Database cursor
-            node_id: Central node ID
-            limit: Maximum number of neighbors
-            
-        Returns:
-            List of neighbor dictionaries
-        """
-        await cursor.execute("""
-            SELECT DISTINCT
-                CASE 
-                    WHEN r.source_id = ? THEN r.target_id
-                    ELSE r.source_id
-                END as neighbor_id,
-                s.label,
-                s.definition,
-                r.relation_type,
-                r.metadata
-            FROM relations r
-            JOIN subjects s ON (
-                (r.source_id = ? AND s.node_id = r.target_id) OR
-                (r.target_id = ? AND s.node_id = r.source_id)
-            )
-            WHERE r.source_id = ? OR r.target_id = ?
-            ORDER BY 
-                CASE 
-                    WHEN r.relation_type != 'cosine_related' THEN 0 
-                    ELSE 1 
-                END,
-                CASE 
-                    WHEN r.relation_type = 'cosine_related' THEN 
-                        CAST(json_extract(r.metadata, '$.similarity') AS REAL)
-                    ELSE 0
-                END DESC
-            LIMIT ?
-        """, (node_id, node_id, node_id, node_id, node_id, limit))
-        
-        return await cursor.fetchall()
 
 # 전역 서비스 인스턴스
 _network_service_instance = None

@@ -7,7 +7,6 @@ Network Interaction Server
 """
 
 import logging
-import uvicorn
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict, Any, Optional, List
@@ -36,18 +35,9 @@ app.add_middleware(
 )
 
 # Request/Response 모델들
-class NodeInfoRequest(BaseModel):
-    node_id: str
 
 class NodesInfoRequest(BaseModel):
     node_ids: List[str]
-
-class ShortestPathRequest(BaseModel):
-    source_id: str
-    target_id: str
-
-class CommunityRequest(BaseModel):
-    community: int
 
 class NodeInfoResponse(BaseModel):
     node_id: str
@@ -55,7 +45,8 @@ class NodeInfoResponse(BaseModel):
 
 class NeighborsResponse(BaseModel):
     node_id: str
-    neighbors: Optional[Dict[str, Dict[str, Any]]]
+    nodes: Optional[List[Dict[str, Any]]]
+    edges: Optional[List[Dict[str, Any]]]
 
 class ShortestPathResponse(BaseModel):
     source_id: str
@@ -115,14 +106,14 @@ async def get_graph_stats(cache: NetworkModelCache = Depends(get_cache)):
     return GraphStatsResponse(stats=stats)
 
 
-@app.post("/node/info", response_model=NodeInfoResponse)
+@app.get("/node/info", response_model=NodeInfoResponse)
 async def get_node_info(
-    request: NodeInfoRequest,
+    node_id: str,
     cache: NetworkModelCache = Depends(get_cache)
 ):
     """특정 노드의 정보 조회"""
-    info = cache.get_node_info(request.node_id)
-    return NodeInfoResponse(node_id=request.node_id, info=info)
+    info = cache.get_node_info(node_id)
+    return NodeInfoResponse(node_id=node_id, info=info)
 
 
 @app.post("/nodes/info")
@@ -139,38 +130,41 @@ async def get_nodes_info(
     return {"nodes": results}
 
 
-@app.post("/node/neighbors", response_model=NeighborsResponse)
+@app.get("/node/neighbors", response_model=NeighborsResponse)
 async def get_node_neighbors(
-    request: NodeInfoRequest,
+    node_id: str,
+    relation_type: Optional[str] = None,
     cache: NetworkModelCache = Depends(get_cache)
 ):
     """특정 노드의 이웃 노드들 조회"""
-    neighbors = cache.get_node_neighbors(request.node_id)
-    return NeighborsResponse(node_id=request.node_id, neighbors=neighbors)
+    nodes, edges = cache.get_node_neighbors(node_id, relation_type)
+    return NeighborsResponse(node_id=node_id, nodes=nodes, edges=edges)
 
 
-@app.post("/path/shortest", response_model=ShortestPathResponse)
+@app.get("/path/shortest", response_model=ShortestPathResponse)
 async def get_shortest_path(
-    request: ShortestPathRequest,
+    source_id: str,
+    target_id: str,
+    relation_type: Optional[str] = None,
     cache: NetworkModelCache = Depends(get_cache)
 ):
     """두 노드 간의 최단 경로 계산"""
-    path = cache.get_shortest_path(request.source_id, request.target_id)
+    path = cache.get_shortest_path(source_id, target_id, relation_type)
     return ShortestPathResponse(
-        source_id=request.source_id,
-        target_id=request.target_id,
+        source_id=source_id,
+        target_id=target_id,
         path=path
     )
 
 
-@app.post("/community/nodes", response_model=CommunityNodesResponse)
+@app.get("/community/nodes", response_model=CommunityNodesResponse)
 async def get_community_nodes(
-    request: CommunityRequest,
+    community: int,
     cache: NetworkModelCache = Depends(get_cache)
 ):
     """특정 커뮤니티에 속한 노드들 조회"""
-    nodes = cache.get_nodes_by_community(request.community)
-    return CommunityNodesResponse(community=request.community, nodes=nodes)
+    nodes = cache.get_nodes_by_community(community)
+    return CommunityNodesResponse(community=community, nodes=nodes)
 
 
 @app.get("/nodes/important", response_model=ImportantNodesResponse)
