@@ -1,11 +1,10 @@
 from functools import lru_cache
 import logging
 import httpx
-from typing import List, Dict
 from fastapi import HTTPException
 from database.database_manager import DatabaseManager
 from core.config import NETWORK_SERVER_URL
-from schemas.network import NetworkResponse, SeedNodeResponse, NetworkEdge, NetworkNode
+from schemas.network import NetworkResponse, SeedNodeResponse, SeedNodeCandidate, NetworkEdge, NetworkNode
 
 from core.config import MAX_NETWORK_NEIGHBORS
 
@@ -138,13 +137,14 @@ class NetworkService:
                 
                 candidates = []
                 for row in results:
-                    candidates.append({
-                        "node_id": row["node_id"],
-                        "label": row["label"],
-                        "definition": row["definition"] or ""
-                    })
-                
-                return {"candidates": candidates}
+                    candidates.append(
+                        SeedNodeCandidate(
+                            node_id=row["node_id"],
+                            label=row["label"],
+                            definition=row["definition"] or ""
+                        )
+                    )
+                return SeedNodeResponse(candidates=candidates)
                 
         except Exception as e:
             logger.error(f"Error searching seed nodes: {e}")
