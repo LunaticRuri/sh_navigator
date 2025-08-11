@@ -13,6 +13,7 @@ import json
 import argparse
 from typing import Dict, Tuple
 import logging
+from tqdm import tqdm
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -228,7 +229,7 @@ def update_database_with_priority_score(db_path: str, priority_scores: Dict[str,
             
             # 우선순위 점수 업데이트
             update_count = 0
-            for node_id, score in priority_scores.items():
+            for node_id, score in tqdm(priority_scores.items()):
                 cursor.execute("""
                     UPDATE subjects 
                     SET priority_score = ?
@@ -237,8 +238,8 @@ def update_database_with_priority_score(db_path: str, priority_scores: Dict[str,
                 
                 if cursor.rowcount > 0:
                     update_count += 1
+                conn.commit()
             
-            conn.commit()
             logger.info(f"우선순위 점수 업데이트 완료: {update_count}개 노드")
     
     except sqlite3.Error as e:
