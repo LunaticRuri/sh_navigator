@@ -9,9 +9,9 @@ from routers import books, subjects, network, chatbot
 from database.database_manager import initialize_database_manager, close_database_manager, get_database_manager
 from service.book_service import set_book_service
 from service.subject_service import set_subject_service
+from service.network_service import set_network_service
 from service.chat_manager import chat_session_manager
 from core.kdc_cache import initialize_kdc_cache
-from core.network_model_cache import initialize_network_cache
 
 
 import logging
@@ -36,11 +36,9 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Application lifespan context manager for startup and shutdown events."""
     try:
+        
         await initialize_kdc_cache()
         logger.info("KDC cache initialized successfully")
-
-        await initialize_network_cache()
-        logger.info("Network model cache initialized successfully")
 
         await initialize_database_manager()
 
@@ -48,6 +46,8 @@ async def lifespan(app: FastAPI):
         
         set_book_service(database_manager)
         set_subject_service(database_manager)
+        set_network_service(database_manager)
+
         
         logger.info("Application started successfully")
         yield

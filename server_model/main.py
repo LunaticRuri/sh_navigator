@@ -45,7 +45,11 @@ except Exception as e:
     books_faiss_index = None
     subjects_faiss_index = None
 
-app = FastAPI(title="SH Navigator Model Server")
+app = FastAPI(
+    title="Embedding & FAISS Server",
+    description="임베딩과 벡터 검색을 처리하는 FastAPI 서버",
+    version="1.0.0"
+    )
 
 
 class EmbedRequest(BaseModel):

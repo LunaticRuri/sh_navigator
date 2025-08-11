@@ -2,9 +2,17 @@ import logging
 import aiosqlite
 import networkx as nx
 import json
+import os
 from tqdm import tqdm
 from typing import Dict, Optional, Any
-from core.config import DATABASE_PATH
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv(dotenv_path="/home/namu101/msga/env")
+
+# Database configuration
+DATA_DIR = "/home/namu101/msga/data"
+DATABASE_PATH = os.path.join(DATA_DIR, 'sh_navigator.db')  # 통합된 단일 데이터베이스
 
 logger = logging.getLogger(__name__)
 
@@ -13,28 +21,8 @@ class NetworkModelCache:
     """
     네트워크 모델 캐시 클래스
     
-    ```python
-    # 캐시 초기화
-    await initialize_network_cache()
-
-    # 캐시 인스턴스 가져오기
-    cache = get_network_cache()
-
-    # 전체 그래프 가져오기
-    graph = cache.get_graph()
-
-    # 특정 노드 정보 조회
-    node_info = cache.get_node_info("some_node_id")
-
-    # 이웃 노드들 조회
-    neighbors = cache.get_node_neighbors("some_node_id")
-
-    # 최단 경로 계산
-    path = cache.get_shortest_path("node1", "node2")
-
-    # 그래프 통계
-    stats = cache.get_graph_stats()
-    ```    
+    별도의 FastAPI 서버에서 실행되는 네트워크 그래프 캐시
+    메모리 사용량이 많은 NetworkX 그래프를 전담 처리
     """
     
     def __init__(self):
@@ -44,9 +32,19 @@ class NetworkModelCache:
     async def initialize(self):
         """네트워크 그래프 캐시 초기화"""
         if self._initialized:
+            logger.info("Network cache already initialized")
             return
         
         try:
+            logger.info(f"Initializing network cache from database: {DATABASE_PATH}")
+            
+            if not os.path.exists(DATABASE_PATH):
+                logger.error(f"Database file not found: {DATABASE_PATH}")
+                # 빈 그래프로 초기화
+                self._graph = nx.Graph()
+                self._initialized = True
+                return
+            
             async with aiosqlite.connect(DATABASE_PATH) as conn:
                 conn.row_factory = aiosqlite.Row
                 
@@ -60,6 +58,9 @@ class NetworkModelCache:
                     FROM subjects
                 """)
                 subjects = await cursor.fetchall()
+                
+                if not subjects:
+                    logger.warning("No subjects found in database")
                 
                 # 노드를 그래프에 추가
                 for subject in tqdm(subjects, desc="Loading nodes"):
@@ -78,6 +79,9 @@ class NetworkModelCache:
                     FROM relations
                 """)
                 relations = await cursor.fetchall()
+                
+                if not relations:
+                    logger.warning("No relations found in database")
                 
                 # 엣지를 그래프에 추가
                 for relation in tqdm(relations, desc="Loading edges"):
@@ -99,7 +103,7 @@ class NetworkModelCache:
                 
                 node_count = self._graph.number_of_nodes()
                 edge_count = self._graph.number_of_edges()
-                logger.info(f"Network graph loaded: {node_count} nodes, {edge_count} edges")
+                logger.info(f"Network graph loaded successfully: {node_count} nodes, {edge_count} edges")
                 self._initialized = True
                 
         except Exception as e:
@@ -260,9 +264,11 @@ class NetworkModelCache:
     
     async def refresh(self):
         """캐시 새로고침"""
+        logger.info("Refreshing network cache...")
         self._initialized = False
         self._graph = None
         await self.initialize()
+        logger.info("Network cache refresh completed")
 
 
 # 전역 인스턴스
