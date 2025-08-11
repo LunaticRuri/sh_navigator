@@ -19,7 +19,6 @@ from core.utils import (
 )
 from core.config import (
     MAX_QUERY_LENGTH,
-    MAX_NETWORK_NEIGHBORS,
     MODEL_SERVER_URL
 )
 
@@ -65,7 +64,7 @@ class SubjectService:
             # Sanitize query
             query = sanitize_query(query)
 
-            async with self.database_manager.get_subjects_connection() as conn:
+            async with self.database_manager.get_connection() as conn:
                 cursor = await conn.cursor()
                 
                 # Build search queries
@@ -124,7 +123,7 @@ class SubjectService:
             SubjectResponse with subject details and relations
         """
         try:
-            async with self.database_manager.get_subjects_connection() as conn:
+            async with self.database_manager.get_connection() as conn:
                 cursor = await conn.cursor()
                 
                 # Get subject details
@@ -195,7 +194,7 @@ class SubjectService:
                 )
             
             # Get subject details from database
-            async with self.database_manager.get_subjects_connection() as conn:
+            async with self.database_manager.get_connection() as conn:
                 cursor = await conn.cursor()
                 
                 # Calculate pagination
@@ -259,7 +258,7 @@ class SubjectService:
             # Validate node_id
             if not node_id:
                 raise HTTPException(status_code=400, detail="주제 ID를 제공해야 합니다.")
-            async with self.database_manager.get_books_connection() as book_conn:
+            async with self.database_manager.get_connection() as book_conn:
                 book_cursor = await book_conn.cursor()
                 book_subject_index_query = "SELECT isbn FROM book_subject_index WHERE node_id = ?"
                 await book_cursor.execute(book_subject_index_query, (node_id,))
@@ -267,7 +266,7 @@ class SubjectService:
                 retrieved_isbns = await book_cursor.fetchall()
                 if not retrieved_isbns:
                     
-                    async with self.database_manager.get_subjects_connection() as subject_conn:
+                    async with self.database_manager.get_connection() as subject_conn:
                         subject_cursor = await subject_conn.cursor()
                         neighbors_dict = await self._get_node_neighbors(subject_cursor, node_id, 10)
                     

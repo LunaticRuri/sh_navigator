@@ -5,6 +5,7 @@ from typing import List, Dict
 from fastapi import HTTPException
 from database.database_manager import DatabaseManager
 from core.kdc_cache import get_kdc_cache
+from core.network_model_cache import get_network_cache
 from schemas.network import NetworkResponse, SeedNodeResponse
 
 from core.config import MAX_NETWORK_NEIGHBORS
@@ -26,6 +27,8 @@ class NetworkService:
         self.http_client = httpx.AsyncClient(timeout=10.0)
         self.database_manager = database_manager
         self.kdc_cache = get_kdc_cache()
+        self.network_cache = get_network_cache()
+    
         
     async def get_node_neighbors(self, node_id: str, limit: int = 10) -> NetworkResponse:
         """
@@ -42,7 +45,7 @@ class NetworkService:
             # Validate limit
             limit = min(limit, MAX_NETWORK_NEIGHBORS)
             
-            async with self.database_manager.get_subjects_connection() as conn:
+            async with self.database_manager.get_connection() as conn:
                 cursor = await conn.cursor()
                 
                 # Get current node information
@@ -56,6 +59,9 @@ class NetworkService:
                     raise HTTPException(status_code=404, detail="노드를 찾을 수 없습니다.")
                 
                 # Get connected neighbors
+                neighbors_ids = await self.network_cache.get_node_neighbors(node_id)
+                print(f"Retrieved neighbors IDs: {neighbors_ids}")
+                
                 neighbors = await self._get_node_neighbors(cursor, node_id, limit)
                 
                 # Build network response
@@ -108,7 +114,7 @@ class NetworkService:
             SeedNodeResponse with candidate nodes
         """
         try:
-            async with self.database_manager.get_subjects_connection() as conn:
+            async with self.database_manager.get_connection() as conn:
                 cursor = await conn.cursor()
                 
                 # Search using FTS

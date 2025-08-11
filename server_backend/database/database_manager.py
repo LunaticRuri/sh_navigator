@@ -1,7 +1,7 @@
-from typing import Dict, Optional
+from typing import Optional
 from contextlib import asynccontextmanager
 from database.database_pool import AsyncConnectionPool
-from core.config import SUBJECTS_DB_PATH, BOOKS_DB_PATH
+from core.config import DATABASE_PATH, DB_POOL_MAX_CONNECTIONS, DB_POOL_MIN_CONNECTIONS
 import os
 import logging
 
@@ -10,77 +10,68 @@ logger = logging.getLogger(__name__)
 
 class DatabaseManager:
     """
-    Centralized database manager for handling multiple database connections.
+    Simplified database manager for single database with connection pooling.
+    Optimized for FastAPI concurrent requests.
     """
     
     def __init__(self):
-        self._pools: Dict[str, AsyncConnectionPool] = {}
+        self._pool: Optional[AsyncConnectionPool] = None
         self._initialized = False
     
     async def initialize(self):
-        """Initialize all database connection pools."""
+        """Initialize database connection pool."""
         if self._initialized:
             return
 
-        if not os.path.exists(BOOKS_DB_PATH):
-            raise FileNotFoundError(f"Books database not found: {BOOKS_DB_PATH}")
-        if not os.path.exists(SUBJECTS_DB_PATH):
-            raise FileNotFoundError(f"Subjects database not found: {SUBJECTS_DB_PATH}")
+        if not os.path.exists(DATABASE_PATH):
+            raise FileNotFoundError(f"Database not found: {DATABASE_PATH}")
 
         try:
-            # Initialize subjects database pool
-            self._pools['subjects'] = AsyncConnectionPool(SUBJECTS_DB_PATH)
-            await self._pools['subjects'].initialize_pool()
-            
-            self._pools['books'] = AsyncConnectionPool(BOOKS_DB_PATH)
-            await self._pools['books'].initialize_pool()
+            # 단일 데이터베이스 풀 초기화
+            self._pool = AsyncConnectionPool(
+                database_path=DATABASE_PATH,
+                max_connections=DB_POOL_MAX_CONNECTIONS,
+                min_connections=DB_POOL_MIN_CONNECTIONS
+            )
+            await self._pool.initialize_pool()
             
             self._initialized = True
-            logger.info("DatabaseManager initialized with pools: %s", list(self._pools.keys()))
+            logger.info(f"DatabaseManager initialized with single database: {DATABASE_PATH}")
+            logger.info(f"Connection pool: min={DB_POOL_MIN_CONNECTIONS}, max={DB_POOL_MAX_CONNECTIONS}")
             
         except Exception as e:
             logger.error(f"Failed to initialize DatabaseManager: {e}")
             raise
     
     @asynccontextmanager
-    async def get_subjects_connection(self):
-        """Get connection to subjects database."""
+    async def get_connection(self):
+        """Get database connection from pool."""
         if not self._initialized:
             await self.initialize()
             
-        async with self._pools['subjects'].get_connection() as conn:
-            yield conn
-    
-    @asynccontextmanager
-    async def get_books_connection(self):
-        """Get connection to books database."""
-        if not self._initialized:
-            await self.initialize()
+        if not self._pool:
+            raise RuntimeError("Database pool not initialized")
             
-        if 'books' not in self._pools:
-            raise RuntimeError("Books database not configured")
-            
-        async with self._pools['books'].get_connection() as conn:
+        async with self._pool.get_connection() as conn:
             yield conn
     
     async def close_all(self):
         """Close all database connections."""
-        for pool_name, pool in self._pools.items():
+        if self._pool:
             try:
-                await pool.close_all_connections()
-                logger.info(f"Closed {pool_name} database pool")
+                await self._pool.close_all_connections()
+                logger.info("Database pool closed")
             except Exception as e:
-                logger.error(f"Error closing {pool_name} pool: {e}")
+                logger.error(f"Error closing database pool: {e}")
         
-        self._pools.clear()
+        self._pool = None
         self._initialized = False
     
-    async def get_all_pool_status(self) -> Dict[str, dict]:
-        """Get status of all database pools."""
-        status = {}
-        for pool_name, pool in self._pools.items():
-            status[pool_name] = await pool.get_pool_status()
-        return status
+    async def get_pool_status(self) -> dict:
+        """Get database pool status."""
+        if not self._pool:
+            return {"status": "not_initialized"}
+        return await self._pool.get_pool_status()
 
 
 # Global instance

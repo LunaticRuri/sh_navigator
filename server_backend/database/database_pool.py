@@ -11,37 +11,39 @@ import aiosqlite
 import logging
 from contextlib import asynccontextmanager
 from typing import Optional
-from core.config import DB_POOL_INITIAL_CONNECTIONS, DB_POOL_MAX_CONNECTIONS
+from core.config import DB_CONNECTION_TIMEOUT
 
 logger = logging.getLogger(__name__)
 
 
 class AsyncConnectionPool:
     """
-    Asynchronous database connection pool for SQLite databases.
-    
-    This class manages a pool of database connections to improve performance
-    and handle concurrent database operations efficiently.
+    Asynchronous database connection pool for single SQLite database.
+    Optimized for FastAPI concurrent requests.
     """
 
-    def __init__(self, db_path: str):
+    def __init__(self, database_path: str, max_connections: int = 20, min_connections: int = 2):
         """
         Initialize the connection pool.
         
         Args:
-            db_path: Path to the SQLite database file
+            database_path: Path to the SQLite database file
             max_connections: Maximum number of concurrent connections
+            min_connections: Minimum number of connections to maintain
         """
-        self.db_path = db_path
-        self.start_connections = DB_POOL_INITIAL_CONNECTIONS
-        self.max_connections = DB_POOL_MAX_CONNECTIONS
-        self.pool = asyncio.Queue(maxsize=self.max_connections)
+        self.database_path = database_path
+        self.max_connections = max_connections
+        self.min_connections = min_connections
+        self.pool = asyncio.Queue(maxsize=max_connections)
         self.current_connections = 0
         self.lock = asyncio.Lock()
-        
+        self._initialized = False
     async def initialize_pool(self) -> None:
-        """Initialize the connection pool with initial connections."""
-        initial_connections = min(self.start_connections, self.max_connections)
+        """Initialize the connection pool with minimum connections."""
+        if self._initialized:
+            return
+
+        initial_connections = min(self.min_connections, self.max_connections)
         
         for _ in range(initial_connections):
             conn = await self._create_connection()
@@ -50,7 +52,8 @@ class AsyncConnectionPool:
                 async with self.lock:
                     self.current_connections += 1
                     
-        logger.info(f"Initialized connection pool for {self.db_path} with {initial_connections} connections")
+        self._initialized = True
+        logger.info(f"Initialized connection pool for {self.database_path} with {initial_connections} connections")
     
     async def _create_connection(self) -> Optional[aiosqlite.Connection]:
         """
@@ -60,19 +63,25 @@ class AsyncConnectionPool:
             Database connection or None if creation failed
         """
         try:
-            conn = await aiosqlite.connect(self.db_path)
+            conn = await aiosqlite.connect(
+                self.database_path,
+                timeout=DB_CONNECTION_TIMEOUT,
+                check_same_thread=False
+            )
             conn.row_factory = aiosqlite.Row
             
-            # Optimize connection settings
-            await conn.execute("PRAGMA journal_mode=WAL")  # Enable WAL mode for better concurrency
-            await conn.execute("PRAGMA query_only=1")      # Set read-only for safety
-            # await conn.execute("PRAGMA cache_size=10000")  # Increase cache size
-            # await conn.execute("PRAGMA temp_store=memory") # Use memory for temp storage
+            # SQLite 최적화 설정
+            await conn.execute("PRAGMA foreign_keys = ON")
+            await conn.execute("PRAGMA journal_mode = WAL")
+            await conn.execute("PRAGMA synchronous = NORMAL")
+            await conn.execute("PRAGMA cache_size = 1000")
+            await conn.execute("PRAGMA temp_store = MEMORY")
+            await conn.execute("PRAGMA mmap_size = 268435456")  # 256MB
             
             return conn
             
         except Exception as e:
-            logger.error(f"Failed to create database connection for {self.db_path}: {e}")
+            logger.error(f"Failed to create database connection for {self.database_path}: {e}")
             return None
     
     async def _is_connection_valid(self, conn: aiosqlite.Connection) -> bool:
@@ -151,7 +160,7 @@ class AsyncConnectionPool:
                     else:
                         # Wait for available connection
                         logger.debug("Max connections reached, waiting for available connection")
-                        conn = await asyncio.wait_for(self.pool.get(), timeout=10)
+                        conn = await asyncio.wait_for(self.pool.get(), timeout=30)
                         connection_from_pool = True
                         
                         # Validate waited connection
@@ -207,7 +216,7 @@ class AsyncConnectionPool:
 
     async def close_all_connections(self) -> None:
         """Close all connections in the pool. Used during application shutdown."""
-        logger.info(f"Closing all connections for {self.db_path}")
+        logger.info(f"Closing all connections for {self.database_path}")
         
         # Close all pooled connections
         while not self.pool.empty():
@@ -222,7 +231,8 @@ class AsyncConnectionPool:
         async with self.lock:
             self.current_connections = 0
             
-        logger.info(f"All connections closed for {self.db_path}")
+        self._initialized = False
+        logger.info(f"All connections closed for {self.database_path}")
     
     async def get_pool_status(self) -> dict:
         """
@@ -233,9 +243,11 @@ class AsyncConnectionPool:
         """
         async with self.lock:
             return {
+                "database_path": self.database_path,
+                "initialized": self._initialized,
                 "current_connections": self.current_connections,
                 "max_connections": self.max_connections,
+                "min_connections": self.min_connections,
                 "pool_size": self.pool.qsize(),
-                "pool_available": not self.pool.empty(),
-                "db_path": self.db_path
+                "pool_available": not self.pool.empty()
             }

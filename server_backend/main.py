@@ -11,15 +11,13 @@ from service.book_service import set_book_service
 from service.subject_service import set_subject_service
 from service.chat_manager import chat_session_manager
 from core.kdc_cache import initialize_kdc_cache
+from core.network_model_cache import initialize_network_cache
 
 
 import logging
 
 # Local imports
-from core.config import (
-    CORS_ORIGINS,
-    CORS_ORIGINS
-)
+from core.config import CORS_ORIGINS
 
 
 # Configure logging
@@ -40,6 +38,9 @@ async def lifespan(app: FastAPI):
     try:
         await initialize_kdc_cache()
         logger.info("KDC cache initialized successfully")
+
+        await initialize_network_cache()
+        logger.info("Network model cache initialized successfully")
 
         await initialize_database_manager()
 
@@ -100,6 +101,34 @@ def create_app() -> FastAPI:
     async def get_chat_stats():
         """채팅 세션 통계를 확인합니다."""
         return chat_session_manager.get_session_stats()
+    
+    @app.get("/debug/db-pool-status", tags=["Debug"])
+    async def get_db_pool_status():
+        """데이터베이스 풀 상태를 확인합니다."""
+        db_manager = get_database_manager()
+        return await db_manager.get_pool_status()
+    
+    @app.get("/health", tags=["General"])
+    async def health_check():
+        """전체 서비스 상태 확인"""
+        try:
+            db_manager = get_database_manager()
+            pool_status = await db_manager.get_pool_status()
+            
+            return {
+                "status": "healthy",
+                "application": "running",
+                "database": {
+                    "status": "connected" if pool_status.get("initialized") else "disconnected",
+                    "pool": pool_status
+                }
+            }
+        except Exception as e:
+            return {
+                "status": "unhealthy", 
+                "application": "running",
+                "database": {"error": str(e)}
+            }
     
     # Mount static files for frontend
     app.mount("/", StaticFiles(directory="../server_frontend", html=True), name="static")

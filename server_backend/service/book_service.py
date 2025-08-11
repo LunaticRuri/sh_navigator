@@ -61,7 +61,7 @@ class BookService:
             if title:
                 title = sanitize_query(title)
 
-            async with self.database_manager.get_books_connection() as conn:
+            async with self.database_manager.get_connection() as conn:
                 cursor = await conn.cursor()
                 
                 # Build search query
@@ -119,7 +119,7 @@ class BookService:
             BookResponse with book details
         """
         try:
-            async with self.database_manager.get_books_connection() as conn:
+            async with self.database_manager.get_connection() as conn:
                 cursor = await conn.cursor()
                 
                 await cursor.execute("SELECT * FROM books WHERE isbn = ?", (isbn,))
@@ -181,7 +181,7 @@ class BookService:
                 )
 
             # Get book details from database
-            async with self.database_manager.get_books_connection() as conn:
+            async with self.database_manager.get_connection() as conn:
                 cursor = await conn.cursor()
                 
                 # Calculate pagination
@@ -248,7 +248,7 @@ class BookService:
             # Validate node_id
             if not node_id:
                 raise HTTPException(status_code=400, detail="주제 ID를 제공해야 합니다.")
-            async with self.database_manager.get_books_connection() as conn:
+            async with self.database_manager.get_connection() as conn:
                 cursor = await conn.cursor()
                 query = "SELECT isbn FROM book_subject_index WHERE node_id = ?"
                 await cursor.execute(query, (node_id,))
