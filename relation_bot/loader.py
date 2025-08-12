@@ -7,17 +7,51 @@ import httpx
 def create_relation_bot_database():
     """Create the relation_bot database if it does not exist."""
     with sqlite3.connect(RELATION_BOT_DATABASE) as conn:
+        
         cursor = conn.cursor()
+        cursor.execute('DROP TABLE IF EXISTS pool')
+        cursor.execute('DROP TABLE IF EXISTS history')
+        cursor.execute('DROP TABLE IF EXISTS checkpoint')
+        
+        # Create the pool table if it does not exist
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS pool (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 source_id TEXT NOT NULL,
                 source_label TEXT NOT NULL,
                 source_definition TEXT,
                 target_id TEXT NOT NULL,
                 target_label TEXT NOT NULL,
                 target_definition TEXT,
-                is_updated INTEGER DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE (source_id, target_id) ON CONFLICT IGNORE
+            )
+        ''')
+
+        # Create the history table if it does not exist
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                source_id TEXT NOT NULL,
+                target_id TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE (source_id, target_id) ON CONFLICT IGNORE
+                )
+        ''')
+
+        # Create the checkpoint table if it does not exist
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS checkpoint (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                is_related INTEGER NOT NULL,
+                source_id TEXT NOT NULL,
+                source_label TEXT NOT NULL,
+                target_id TEXT NOT NULL,
+                target_label TEXT NOT NULL,
+                predicate TEXT,
+                description TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE (source_id, target_id) ON CONFLICT IGNORE
             )
         ''')
         conn.commit()
@@ -171,4 +205,4 @@ def set_top_n_candidates(n: int = 500):
 
 if __name__ == "__main__":
     create_relation_bot_database()
-    set_top_n_candidates(500)
+    set_top_n_related_candidates(100)

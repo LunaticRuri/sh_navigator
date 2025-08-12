@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 
 
-load_dotenv()
+load_dotenv(dotenv_path="/home/namu101/msga/env")
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 GEMINI_MODEL = "gemini-2.5-flash-lite"

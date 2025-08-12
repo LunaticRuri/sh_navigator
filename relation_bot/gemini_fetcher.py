@@ -6,8 +6,7 @@ from pydantic import BaseModel
 from typing import List, Dict
 import json
 from config import GEMINI_API_KEY, GEMINI_MODEL
-
-load_dotenv()
+from tqdm import tqdm
 
 class RelationCandidate(BaseModel):
     source_id: str
@@ -94,8 +93,7 @@ class GeminiFetcher:
     def __init__(self):
         """Initialize the Gemini client with API key."""
         self.client = genai.Client(
-            api_key=GEMINI_API_KEY,
-            model=GEMINI_MODEL
+            api_key=GEMINI_API_KEY
         )
 
     
@@ -118,6 +116,7 @@ class GeminiFetcher:
     def _get_response(self, contents: str):
         response = self.client.models.generate_content(
             contents=contents,
+            model=GEMINI_MODEL,
             config=GeminiFetcher.generate_content_config
         )
         return response.text
@@ -125,16 +124,17 @@ class GeminiFetcher:
     def generate_relations(self, candidates: List[RelationCandidate]) -> List[PredictedRelation]:
         
         results = []
-
-        for batch_contents in self._yield_batch_contents(candidates, batch_size=10):
+        batch_count = (len(candidates) + 9) // 10  # Calculate number of batches
+        print(f"Processing {len(candidates)} candidates in {batch_count} batches...")
+        for batch_contents in tqdm(self._yield_batch_contents(candidates, batch_size=10), total=batch_count, desc="Generating relations"):
             contents = [
                 types.Content(
                     role="user",
                     parts=[types.Part.from_text(text=str(batch_contents))],
                 ),
             ]
-            response_text = self._get_response(contents)
             try:
+                response_text = self._get_response(contents)
                 response_json = json.loads(response_text)
                 response_json = response_json.get("candidates", [])
                 for item in response_json:
@@ -147,9 +147,13 @@ class GeminiFetcher:
                 continue
             except Exception as e:
                 print(f"Unexpected error: {e}")
+                print(f"Response text: {response_text}")
                 continue
+            # For debugging purposes, print the results
+            for result in results:
+                print(f"Processed: {result.source_label} -> {result.target_label} | Related: {result.is_related} | Predicate: {result.predicate} | Description: {result.description}")
             
-            return results
+        return results
         
     def show_example_output(self):
         """Show example output for testing."""
