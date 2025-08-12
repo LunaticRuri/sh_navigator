@@ -1,5 +1,6 @@
 # routers/chatbot.py
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+from typing import List, Dict, Any, Optional
 from schemas.chat import ChatMessage, ChatResponse, ChatbotStatus, SessionResponse
 from service.chat_service import get_chat_service
 

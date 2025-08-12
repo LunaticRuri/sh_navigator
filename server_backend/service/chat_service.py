@@ -7,7 +7,7 @@ from fastapi import HTTPException
 import google.generativeai as genai
 
 from schemas.chat import ChatMessage, ChatResponse
-from service.chat_manager import chat_session_manager
+from chatbot.chat_manager import chat_session_manager
 from core.utils import format_gemini_chat_history, get_system_prompt
 from core.config import GEMINI_API_KEY, GEMINI_MODEL
 

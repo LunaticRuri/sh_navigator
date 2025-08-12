@@ -10,7 +10,7 @@ from database.database_manager import initialize_database_manager, close_databas
 from service.book_service import set_book_service
 from service.subject_service import set_subject_service
 from service.network_service import set_network_service
-from service.chat_manager import chat_session_manager
+from chatbot.chat_manager import chat_session_manager
 from core.kdc_cache import initialize_kdc_cache
 
 
@@ -91,7 +91,6 @@ def create_app() -> FastAPI:
             "description": "주제 표목 네트워크 API",
             "endpoints": {
                 "books": "/books/*",
-                "subjects": "/subjects/*",
                 "network": "/network/*",
                 "chatbot": "/chatbot/*"
             }
