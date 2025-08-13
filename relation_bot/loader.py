@@ -9,8 +9,8 @@ def create_relation_bot_database():
     with sqlite3.connect(RELATION_BOT_DATABASE) as conn:
         
         cursor = conn.cursor()
+        # Don't drop the history table!
         cursor.execute('DROP TABLE IF EXISTS pool')
-        cursor.execute('DROP TABLE IF EXISTS history')
         cursor.execute('DROP TABLE IF EXISTS checkpoint')
         
         # Create the pool table if it does not exist
@@ -205,4 +205,6 @@ def set_top_n_candidates(n: int = 500):
 
 if __name__ == "__main__":
     create_relation_bot_database()
-    set_top_n_related_candidates(100)
+    # set_top_n_related_candidates(1000)
+    set_top_n_candidates(500)
+    print("Relation bot database initialized and candidates set.")

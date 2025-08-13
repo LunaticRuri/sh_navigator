@@ -108,7 +108,7 @@ def rebuild_faiss_index(main_db_path: str, faiss_index_path: str, isbn_map_path:
     logging.info("Index construction completed.")
 
 
-def load_to_books_db(pipeline_db_path: str, main_db_path: str):
+def load_to_main_db(pipeline_db_path: str, main_db_path: str):
     """
     Load processed books from the pipeline database to the main SQLite database.
     Args:

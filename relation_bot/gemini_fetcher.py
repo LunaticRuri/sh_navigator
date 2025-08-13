@@ -34,7 +34,9 @@ class GeminiFetcher:
 1. 너의 역할은 label과 definition 그리고 너의 지식을 종합적으로 활용하여 관계를 파악하는 것이다.
 2. 만약 서로 아무 관련이 없거나, 관계가 유의미하지 않게 간접적인 경우에는 is_related에 false를 넣고, predicate랑 description에는 아무것도 적지 않아도 된다.
 3. 만약 서로 유의미한 관련이 있다면, predicate에는 source_lable과 target_label이 서술될 수 있는 표현을 넣으면 된다. (e.g. source_label: '증거 재판 주의', target_label: '실체적 진실 주의' 일 때 predicate: '대립하는 개념이다') 그리고 그 판단 이유에 대해 description에 간략하게 한 줄로 이유를 작성하자.
-4. predicate에 '관련이 있다'와 같이 구체적이지 않은 표현은 사용하면 안된다. 항상 두 주제 간의 구체적인 관계를 드러내야 한다. 다만, 되도록이면 label에 쓰인 이름은 predicate에 들어가지 않도록 문장을 구성하라.
+4. predicate에 '관련이 있다'와 같이 구체적이지 않은 표현은 사용하면 안된다. 항상 두 주제 간의 구체적인 관계를 드러내야 한다. 
+5. 다만, 되도록이면 label에 쓰인 단어는 predicate에 들어가지 않도록 문장을 구성하라. (e.g. source_label: '경계값 제어', target_label: '제어 장치' 일 때 predicate가 '경계값 제어는 제어 장치의 작동 방식 중 하나이다'이면 안된다. 대신 predicate: '작동 방식 중 하나이다'는 적절하다.)
+6. predicate는 source_label을 주어로 하고 target_label을 잇는 구(phrase)여야 한다. source와 target의 순서에 유의하여 predicate를 작성하라. (예시: source_label: '산업화', target_label: '환경 오염' 일 때 predicate: '원인이 될 수 있다')
 """
 
     generate_content_config = types.GenerateContentConfig(
@@ -119,13 +121,13 @@ class GeminiFetcher:
             model=GEMINI_MODEL,
             config=GeminiFetcher.generate_content_config
         )
-        return response.text
+        return response
     
-    def generate_relations(self, candidates: List[RelationCandidate]) -> List[PredictedRelation]:
+    def generate_relations(self, candidates: List[RelationCandidate], progress: int = 0) -> List[PredictedRelation]:
         
         results = []
         batch_count = (len(candidates) + 9) // 10  # Calculate number of batches
-        print(f"Processing {len(candidates)} candidates in {batch_count} batches...")
+        
         for batch_contents in tqdm(self._yield_batch_contents(candidates, batch_size=10), total=batch_count, desc="Generating relations"):
             contents = [
                 types.Content(
@@ -134,7 +136,11 @@ class GeminiFetcher:
                 ),
             ]
             try:
-                response_text = self._get_response(contents)
+                response = self._get_response(contents)
+                response_text = response.text
+                if not response_text:
+                    print("Empty response received.")
+                    continue
                 response_json = json.loads(response_text)
                 response_json = response_json.get("candidates", [])
                 for item in response_json:
@@ -152,6 +158,9 @@ class GeminiFetcher:
             # For debugging purposes, print the results
             for result in results:
                 print(f"Processed: {result.source_label} -> {result.target_label} | Related: {result.is_related} | Predicate: {result.predicate} | Description: {result.description}")
+            if hasattr(response, "usage_metadata") and hasattr(response.usage_metadata, "total_token_count"):
+                print(f"Used tokens in this batch: {response.usage_metadata.total_token_count}")
+            print("=" * 10 + f" Batch {progress // 1000 + 1}" + "=" * 10)
             
         return results
         

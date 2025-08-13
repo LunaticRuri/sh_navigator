@@ -24,7 +24,7 @@ def run_full_pipeline():
     
     loader.save_embeddings(main_db_path=EMBEDDINGS_DB_PATH, pipeline_db_path=PIPELINE_DB_PATH)
     loader.rebuild_faiss_index()
-    loader.load_to_books_db(pipeline_db_path=PIPELINE_DB_PATH, main_db_path=DATABASE_PATH)
+    loader.load_to_main_db(pipeline_db_path=PIPELINE_DB_PATH, main_db_path=DATABASE_PATH)
 
     logging.info("===== Data pipeline completed =====")
 

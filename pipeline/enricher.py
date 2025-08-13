@@ -129,7 +129,6 @@ def enrich_books(pipeline_db_path: str, main_db_path: str, gemini_search_groundi
         elif gemini_search_grounding and not intro:
             _update_pipeline_db(pipeline_cursor, record_id, intro, toc, None, 'gemini_batch')
         else:
-            # TODO: Handle cases where both intro and toc are missing -> should be updated regardless of no enrichment
             _update_pipeline_db(pipeline_cursor, record_id, intro, toc, None, 'no_data')
 
     pipeline_conn.commit()
@@ -161,7 +160,6 @@ def enrich_books(pipeline_db_path: str, main_db_path: str, gemini_search_groundi
                     if book.get('summary'):
                         _update_pipeline_db(pipeline_cursor, book['id'], None, None, None, 'enriched')
                     else:
-                        # TODO: Handle cases where Gemini enrichment fails -> should be upadted regardless of failure
                         _update_pipeline_db(pipeline_cursor, book['id'], None, None, None, 'failed')
                     logging.info(f"Gemini Search Grounding enriched book {book['isbn']} with summary.")
             else:
