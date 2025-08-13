@@ -1,0 +1,35 @@
+{
+  "timestamp": "2025-08-13T16:15:45.476084",
+  "total_subjects": 257541,
+  "sample_size": 10000,
+  "successful_requests": 9976,
+  "failed_requests": 24,
+  "average_path_length": 6.803,
+  "min_path_length": 2,
+  "max_path_length": 12,
+  "path_lengths_sample": [
+    7,
+    8,
+    8,
+    6,
+    7,
+    6,
+    8,
+    7,
+    4,
+    6
+  ],
+  "length_distribution": {
+    "2": 4,
+    "3": 53,
+    "4": 263,
+    "5": 1149,
+    "6": 2619,
+    "7": 3102,
+    "8": 1887,
+    "9": 674,
+    "10": 176,
+    "11": 37,
+    "12": 12
+  }
+}

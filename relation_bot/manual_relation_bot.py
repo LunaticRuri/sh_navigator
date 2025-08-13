@@ -2,7 +2,7 @@ import sqlite3
 import json
 from typing import List
 from gemini_fetcher import RelationCandidate, PredictedRelation, GeminiFetcher
-from config import RELATION_BOT_DATABASE, DATABASE_PATH
+from config import RELATION_BOT_DATABASE, MAIN_DATABASE
 from tqdm import tqdm
 
 
@@ -84,7 +84,7 @@ def main():
 def update_main_db():
     """Update the main database with the predictions."""
     
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(MAIN_DATABASE)
     cursor = conn.cursor()
 
     with sqlite3.connect(RELATION_BOT_DATABASE) as relation_conn:

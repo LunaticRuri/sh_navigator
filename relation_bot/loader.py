@@ -1,4 +1,4 @@
-from config import RELATION_BOT_DATABASE, DATABASE_PATH, NETWORK_SERVER_URL
+from config import RELATION_BOT_DATABASE, MAIN_DATABASE, NETWORK_SERVER_URL
 import sqlite3
 from tqdm import tqdm
 from itertools import combinations
@@ -65,7 +65,7 @@ def reset_relation_bot_database():
     create_relation_bot_database()
 
 def set_top_n_related_candidates(n: int = 100):
-    with sqlite3.connect(DATABASE_PATH) as main_conn, sqlite3.connect(RELATION_BOT_DATABASE) as relation_conn:
+    with sqlite3.connect(MAIN_DATABASE) as main_conn, sqlite3.connect(RELATION_BOT_DATABASE) as relation_conn:
         main_cursor = main_conn.cursor()
         relation_cursor = relation_conn.cursor()
 
@@ -122,7 +122,7 @@ def set_top_n_candidates(n: int = 500):
 
     httpx_client = httpx.Client(timeout=10.0)
 
-    with sqlite3.connect(DATABASE_PATH) as main_conn, sqlite3.connect(RELATION_BOT_DATABASE) as relation_conn:
+    with sqlite3.connect(MAIN_DATABASE) as main_conn, sqlite3.connect(RELATION_BOT_DATABASE) as relation_conn:
         main_cursor = main_conn.cursor()
         relation_cursor = relation_conn.cursor()
 
