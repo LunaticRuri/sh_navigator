@@ -1,13 +1,12 @@
-import os
 from google import genai
 from google.genai import types
-from dotenv import load_dotenv
 from pydantic import BaseModel
-from typing import List, Dict
+from typing import List
 import json
 from config import GEMINI_API_KEY, GEMINI_MODEL
 from tqdm import tqdm
 
+# Data model for relation candidates
 class RelationCandidate(BaseModel):
     source_id: str
     source_label: str
@@ -16,6 +15,7 @@ class RelationCandidate(BaseModel):
     target_label: str
     target_definition: str
 
+# Data model for predicted relations
 class PredictedRelation(BaseModel):
     is_related: bool
     source_id: str
@@ -25,20 +25,21 @@ class PredictedRelation(BaseModel):
     predicate: str = ""
     description: str = ""
 
-
 class GeminiFetcher:
     """Class to interact with Gemini API for generating relations."""
 
+    # System instruction for Gemini model (Korean)
     system_instruction_text = """
 아래는 주제명 표목에서 뽑은 랜덤한 쌍들이다.
 1. 너의 역할은 label과 definition 그리고 너의 지식을 종합적으로 활용하여 관계를 파악하는 것이다.
-2. 만약 서로 아무 관련이 없거나, 관계가 유의미하지 않게 간접적인 경우에는 is_related에 false를 넣고, predicate랑 description에는 아무것도 적지 않아도 된다.
+2. 만약 서로 아무 관련이 없거나, 관계가 유의미하지 않게 간접적인 경우에는 is_related에 false를 넣고, predicate랑 description에는 아무것도 적으면 안된다.
 3. 만약 서로 유의미한 관련이 있다면, predicate에는 source_lable과 target_label이 서술될 수 있는 표현을 넣으면 된다. (e.g. source_label: '증거 재판 주의', target_label: '실체적 진실 주의' 일 때 predicate: '대립하는 개념이다') 그리고 그 판단 이유에 대해 description에 간략하게 한 줄로 이유를 작성하자.
 4. predicate에 '관련이 있다'와 같이 구체적이지 않은 표현은 사용하면 안된다. 항상 두 주제 간의 구체적인 관계를 드러내야 한다. 
 5. 다만, 되도록이면 label에 쓰인 단어는 predicate에 들어가지 않도록 문장을 구성하라. (e.g. source_label: '경계값 제어', target_label: '제어 장치' 일 때 predicate가 '경계값 제어는 제어 장치의 작동 방식 중 하나이다'이면 안된다. 대신 predicate: '작동 방식 중 하나이다'는 적절하다.)
 6. predicate는 source_label을 주어로 하고 target_label을 잇는 구(phrase)여야 한다. source와 target의 순서에 유의하여 predicate를 작성하라. (예시: source_label: '산업화', target_label: '환경 오염' 일 때 predicate: '원인이 될 수 있다')
 """
 
+    # Gemini API content generation configuration
     generate_content_config = types.GenerateContentConfig(
         response_mime_type="application/json",
         response_schema=genai.types.Schema(
@@ -98,8 +99,17 @@ class GeminiFetcher:
             api_key=GEMINI_API_KEY
         )
 
-    
     def _yield_batch_contents(self, candidates: List[RelationCandidate], batch_size: int = 10):
+        """
+        Yield batches of candidates for API requests.
+
+        Args:
+            candidates (List[RelationCandidate]): List of relation candidates.
+            batch_size (int): Number of candidates per batch.
+
+        Yields:
+            List[Dict]: Batch of candidate dictionaries.
+        """
         for i in range(0, len(candidates), batch_size):
             batch = candidates[i:i + batch_size]
             yield [
@@ -113,22 +123,40 @@ class GeminiFetcher:
                 }
                 for c in batch
             ]
-    
-    
+
     def _get_response(self, contents: str):
+        """
+        Send request to Gemini API and get response.
+
+        Args:
+            contents (str): Content to send.
+
+        Returns:
+            Response object from Gemini API.
+        """
         response = self.client.models.generate_content(
             contents=contents,
             model=GEMINI_MODEL,
             config=GeminiFetcher.generate_content_config
         )
         return response
-    
+
     def generate_relations(self, candidates: List[RelationCandidate], progress: int = 0) -> List[PredictedRelation]:
-        
+        """
+        Generate relations for given candidates using Gemini API.
+
+        Args:
+            candidates (List[RelationCandidate]): List of relation candidates.
+            progress (int): Progress indicator (default: 0).
+
+        Returns:
+            List[PredictedRelation]: List of predicted relations.
+        """
         results = []
         batch_count = (len(candidates) + 9) // 10  # Calculate number of batches
-        
+
         for batch_contents in tqdm(self._yield_batch_contents(candidates, batch_size=10), total=batch_count, desc="Generating relations"):
+            # Prepare content for Gemini API
             contents = [
                 types.Content(
                     role="user",
@@ -153,20 +181,21 @@ class GeminiFetcher:
                 continue
             except Exception as e:
                 print(f"Unexpected error: {e}")
-                print(f"Response text: {response_text}")
                 continue
-            # For debugging purposes, print the results
+            # Debug: Print processed results
             for result in results:
                 print(f"Processed: {result.source_label} -> {result.target_label} | Related: {result.is_related} | Predicate: {result.predicate} | Description: {result.description}")
+            # Debug: Print token usage if available
             if hasattr(response, "usage_metadata") and hasattr(response.usage_metadata, "total_token_count"):
                 print(f"Used tokens in this batch: {response.usage_metadata.total_token_count}")
             print("=" * 10 + f" Batch {progress // 1000 + 1}" + "=" * 10)
-            
-        return results
-        
-    def show_example_output(self):
-        """Show example output for testing."""
 
+        return results
+
+    def show_example_output(self):
+        """
+        Show example output for testing the relation generation.
+        """
         example_candidates = [
             RelationCandidate(
                 source_id="nlk:KSH2005014167",
@@ -185,7 +214,7 @@ class GeminiFetcher:
                 target_definition="Local Area Network(LAN)의 약자로, 집, 사무실, 학교 등과 같이 한정된 지리적 영역 내의 컴퓨터와 주변 장치들을 연결하여 정보를 교환하고 자원을 공유할 수 있도록 구축된 네트워크 시스템입니다. 일반적으로 하나의 라우터를 통해 중앙 집중식 인터넷 연결을 공유하며, 효율적인 데이터 전달을 위해 네트워크 스위치를 추가로 사용할 수 있습니다. 유선 및 Wi-Fi 연결 장치를 모두 포함하는 개념으로, 사용자의 컴퓨터, 휴대폰, 태블릿 등이 LAN을 구성합니다. 광역 통신망(WAN)과 대조적으로, 제한된 지역을 대상으로 고속 통신이 가능하며 패킷 전달의 지연 시간이 최소화됩니다. IEEE 802 워킹 그룹에서 LAN 관련 표준안을 제시하여 다양한 장비 간 호환성을 보장합니다."
             )
         ]
-        
+
         fetcher = GeminiFetcher()
         results = fetcher.generate_relations(example_candidates)
 
@@ -195,5 +224,6 @@ class GeminiFetcher:
             print('\n')
 
 if __name__ == "__main__":
+    # Run example output if executed as main script
     fetcher = GeminiFetcher()
     fetcher.show_example_output()

@@ -139,7 +139,7 @@ def set_top_n_candidates(n: int = 500):
         for (source_id, source_label, source_definition), (target_id, target_label, target_definition) in tqdm(candidate_pairs):
 
             main_cursor.execute(
-                "SELECT source_id, target_id, relation_type FROM relations "
+                "SELECT 1 FROM relations "
                 "WHERE source_id = ? AND target_id = ? AND (relation_type = 'broader' OR relation_type = 'narrower')",
                 (source_id, target_id)
             )
@@ -200,11 +200,15 @@ def set_top_n_candidates(n: int = 500):
                         target_id, target_label, target_definition
                     ))
             relation_conn.commit()
-        
+
+def set_candidates_from_text(text: str):
+    """Set candidates from a given text."""
+    # TODO: Implement text processing to extract candidates
+    ...
 
 
 if __name__ == "__main__":
     create_relation_bot_database()
     # set_top_n_related_candidates(1000)
-    set_top_n_candidates(500)
+    set_top_n_candidates(1000)
     print("Relation bot database initialized and candidates set.")

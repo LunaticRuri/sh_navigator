@@ -5,30 +5,40 @@ from gemini_fetcher import RelationCandidate, PredictedRelation, GeminiFetcher
 from config import RELATION_BOT_DATABASE, MAIN_DATABASE
 from tqdm import tqdm
 
-
-
-def _check_already_generated(source_id: str, target_id: str) -> bool:
-    """Check if a relation has already been generated for the given source and target IDs."""
-    
+def _check_history(source_id: str, target_id: str) -> bool:
+    """
+    Check if a relation has already been generated for the given source and target IDs.
+    Returns True if the relation exists in the history table, otherwise False.
+    """
     with sqlite3.connect(RELATION_BOT_DATABASE) as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT 1 FROM history WHERE source_id = ? AND target_id = ?", (source_id, target_id))
+        cursor.execute(
+            "SELECT 1 FROM history WHERE source_id = ? AND target_id = ?",
+            (source_id, target_id)
+        )
         return cursor.fetchone() is not None
 
 def main():
-    """Generate relation predictions using the GeminiFetcher."""
-    
+    """
+    Generate relation predictions using the GeminiFetcher.
+    Fetches jobs from the pool table, filters out those already in history,
+    generates predictions in batches, and saves them to the checkpoint table.
+    """
     print("Fetching jobs from the relation bot pool...")
     with sqlite3.connect(RELATION_BOT_DATABASE) as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT source_id, source_label, source_definition, target_id, target_label, target_definition FROM pool")
+        cursor.execute(
+            "SELECT source_id, source_label, source_definition, target_id, target_label, target_definition FROM pool"
+        )
         jobs = cursor.fetchall()
         filtered_jobs = []
-        for source_id, source_label, source_definition, target_id, target_label, target_definition in jobs:
-            if _check_already_generated(source_id, target_id):
+        # Filter out jobs that are already in history
+        for source_id, source_label, source_definition, target_id, target_label, target_definition in tqdm(jobs, desc="Filtering jobs"):
+            if _check_history(source_id, target_id):
                 continue
             filtered_jobs.append((source_id, source_label, source_definition, target_id, target_label, target_definition))
     
+    # Convert filtered jobs to RelationCandidate objects
     candidates = [
         RelationCandidate(
             source_id=row[0],
@@ -39,9 +49,7 @@ def main():
             target_definition=row[5]
         ) for row in filtered_jobs
     ]
-
-    # Filter out candidates that have already been generated
-    candidates = [c for c in candidates if not _check_already_generated(c.source_id, c.target_id)]
+    
     if not candidates:
         print("No candidates found in the pool.")
         raise SystemExit
@@ -51,10 +59,9 @@ def main():
     conn = sqlite3.connect(RELATION_BOT_DATABASE)
     cursor = conn.cursor()
 
-
     print("Initializing GeminiFetcher...")
     fetcher = GeminiFetcher()
-    # 1000개 마다 진행 상황을 저장.
+    # Process candidates in batches of 1000
     print("Generating predictions in batches...")
     for i in range(0, len(candidates), 1000):
         batch_candidates = candidates[i:i + 1000]
@@ -67,11 +74,20 @@ def main():
             print("No predictions generated.")
             continue
         
+        # Save predictions to checkpoint table
         for prediction in predictions:
             cursor.execute("""
                 INSERT OR IGNORE INTO checkpoint (is_related, source_id, source_label, target_id, target_label, predicate, description, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
-            """, (1 if prediction.is_related else 0, prediction.source_id, prediction.source_label, prediction.target_id, prediction.target_label, prediction.predicate, prediction.description))
+            """, (
+                1 if prediction.is_related else 0,
+                prediction.source_id,
+                prediction.source_label,
+                prediction.target_id,
+                prediction.target_label,
+                prediction.predicate,
+                prediction.description
+            ))
             conn.commit()
         
         print("*" + "=" * 20 + f" Batch {i // 1000 + 1} processed. {len(batch_candidates)} candidates processed." + "=" * 20 + "*")
@@ -80,16 +96,23 @@ def main():
     conn.close()
     print("Relation predictions saved to the database.")
 
-
 def update_main_db():
-    """Update the main database with the predictions."""
-    
+    """
+    Update the main database with the predictions from the checkpoint table.
+    For each prediction:
+      - If not related, record in history.
+      - If related, update or insert into relations table and record in history.
+      - Merge metadata if relation already exists.
+    """
     conn = sqlite3.connect(MAIN_DATABASE)
     cursor = conn.cursor()
 
+    # Fetch predictions from checkpoint table
     with sqlite3.connect(RELATION_BOT_DATABASE) as relation_conn:
         relation_cursor = relation_conn.cursor()
-        relation_cursor.execute("SELECT is_related, source_id, source_label, target_id, target_label, predicate, description FROM checkpoint")
+        relation_cursor.execute(
+            "SELECT is_related, source_id, source_label, target_id, target_label, predicate, description FROM checkpoint"
+        )
         predictions = [
             PredictedRelation(
                 is_related=row[0],
@@ -101,73 +124,100 @@ def update_main_db():
                 description=row[6]
             ) 
             for row in relation_cursor.fetchall()
-            ]
+        ]
 
     for prediction in tqdm(predictions, desc="Updating main database"):
-        # 예측된 관계 없는 경우
+        # If prediction is not related, record in history and skip
         if not prediction.is_related:
             with sqlite3.connect(RELATION_BOT_DATABASE) as relation_conn:
                 relation_cursor = relation_conn.cursor()
-                relation_cursor.execute("INSERT OR IGNORE INTO history (source_id, target_id, created_at) VALUES (?, ?, datetime('now'))",(prediction.source_id, prediction.target_id))
+                relation_cursor.execute(
+                    "INSERT OR IGNORE INTO history (source_id, target_id, created_at) VALUES (?, ?, datetime('now'))",
+                    (prediction.source_id, prediction.target_id)
+                )
                 relation_conn.commit()
             continue
         
+        # Prepare metadata for related predictions
         metadata = {
             "predicate": prediction.predicate,
             "description": prediction.description
         }
 
-        cursor.execute("SELECT 1 FROM relations WHERE source_id = ? AND target_id = ? AND (relation_type ='related' or relation_type ='cosine_related')", (prediction.source_id, prediction.target_id))
-        # 기존 related-type 관계가 없는 경우
+        # Check if a related or cosine_related relation already exists
+        cursor.execute(
+            "SELECT 1 FROM relations WHERE source_id = ? AND target_id = ? AND (relation_type ='related' or relation_type ='cosine_related')",
+            (prediction.source_id, prediction.target_id)
+        )
         if not cursor.fetchone():
-            # 새로운 관계를 생성 - generated 관계로 저장
-            cursor.execute("INSERT OR IGNORE INTO relations (source_id, target_id, relation_type, metadata) VALUES (?, ?, ?, ?)", 
-                           (prediction.source_id, prediction.target_id, 'generated', json.dumps(metadata, ensure_ascii=False)))
+            # Insert new generated relation if none exists
+            cursor.execute(
+                "INSERT OR IGNORE INTO relations (source_id, target_id, relation_type, metadata) VALUES (?, ?, ?, ?)", 
+                (prediction.source_id, prediction.target_id, 'generated', json.dumps(metadata, ensure_ascii=False))
+            )
             conn.commit()   
-            
-            # history 테이블에 기록
+            # Record in history
             with sqlite3.connect(RELATION_BOT_DATABASE) as relation_conn:
                 relation_cursor = relation_conn.cursor()
-                relation_cursor.execute("INSERT OR IGNORE INTO history (source_id, target_id, created_at) VALUES (?, ?, datetime('now'))",(prediction.source_id, prediction.target_id))
+                relation_cursor.execute(
+                    "INSERT OR IGNORE INTO history (source_id, target_id, created_at) VALUES (?, ?, datetime('now'))",
+                    (prediction.source_id, prediction.target_id)
+                )
                 relation_conn.commit()
-            # Skip to the next prediction if no existing related-type relation
             continue
         
-        
-        cursor.execute("SELECT metadata FROM relations WHERE source_id = ? AND target_id = ? AND relation_type = 'related'", (prediction.source_id, prediction.target_id))
+        # Update metadata for existing related relation
+        cursor.execute(
+            "SELECT metadata FROM relations WHERE source_id = ? AND target_id = ? AND relation_type = 'related'",
+            (prediction.source_id, prediction.target_id)
+        )
         result = cursor.fetchone()
-        # nlk의 related 관계가 있는 경우
         if result:
             result_metadata = json.loads(result[0])
             result_metadata.update(metadata)
-            cursor.execute("UPDATE relations SET metadata = ? WHERE source_id = ? AND target_id = ? AND relation_type = 'related'", 
-                            (json.dumps(result_metadata, ensure_ascii=False), prediction.source_id, prediction.target_id))
+            cursor.execute(
+                "UPDATE relations SET metadata = ? WHERE source_id = ? AND target_id = ? AND relation_type = 'related'", 
+                (json.dumps(result_metadata, ensure_ascii=False), prediction.source_id, prediction.target_id)
+            )
             conn.commit()
 
-        cursor.execute("SELECT metadata FROM relations WHERE source_id = ? AND target_id = ? AND relation_type = 'cosine_related'", (prediction.source_id, prediction.target_id))
+        # Update metadata for existing cosine_related relation
+        cursor.execute(
+            "SELECT metadata FROM relations WHERE source_id = ? AND target_id = ? AND relation_type = 'cosine_related'",
+            (prediction.source_id, prediction.target_id)
+        )
         result = cursor.fetchone()
-        # cosine_related 관계가 있는 경우
         if result:
             result_metadata = json.loads(result[0])
             result_metadata.update(metadata)
-            cursor.execute("UPDATE relations SET metadata = ? WHERE source_id = ? AND target_id = ? AND relation_type = 'cosine_related'", 
-                            (json.dumps(result_metadata, ensure_ascii=False), prediction.source_id, prediction.target_id))
+            cursor.execute(
+                "UPDATE relations SET metadata = ? WHERE source_id = ? AND target_id = ? AND relation_type = 'cosine_related'", 
+                (json.dumps(result_metadata, ensure_ascii=False), prediction.source_id, prediction.target_id)
+            )
             conn.commit()
         
-        cursor.execute("SELECT metadata FROM relations WHERE source_id = ? AND target_id = ? AND relation_type = 'generated'", (prediction.source_id, prediction.target_id))
+        # Update metadata for existing generated relation (upgrade to related)
+        cursor.execute(
+            "SELECT metadata FROM relations WHERE source_id = ? AND target_id = ? AND relation_type = 'generated'",
+            (prediction.source_id, prediction.target_id)
+        )
         result = cursor.fetchone()
-        # generated 관계가 있는 경우
         if result:
             result_metadata = json.loads(result[0])
             result_metadata.update(metadata)
-            cursor.execute("UPDATE relations SET metadata = ? WHERE source_id = ? AND target_id = ? AND relation_type = 'related'", 
-                            (json.dumps(result_metadata, ensure_ascii=False), prediction.source_id, prediction.target_id))
+            cursor.execute(
+                "UPDATE relations SET metadata = ? WHERE source_id = ? AND target_id = ? AND relation_type = 'related'", 
+                (json.dumps(result_metadata, ensure_ascii=False), prediction.source_id, prediction.target_id)
+            )
             conn.commit()
         
-        # history 테이블에 기록
+        # Record in history
         with sqlite3.connect(RELATION_BOT_DATABASE) as relation_conn:
             relation_cursor = relation_conn.cursor()
-            relation_cursor.execute("INSERT OR IGNORE INTO history (source_id, target_id, created_at) VALUES (?, ?, datetime('now'))",(prediction.source_id, prediction.target_id))
+            relation_cursor.execute(
+                "INSERT OR IGNORE INTO history (source_id, target_id, created_at) VALUES (?, ?, datetime('now'))",
+                (prediction.source_id, prediction.target_id)
+            )
             relation_conn.commit()
     
     conn.commit()
