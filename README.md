@@ -5,7 +5,7 @@
 프로토타입 링크
 (챗봇 기능 공사중)
 
-1. <https://shnavigator.app>
+1. <https://shnavigator.app> (공사중)
 2. <https://shnavigator.app/introduction> (공사중)
 3. FastAPI Docs
    - <http://146.190.98.230:8000/docs> (Main)
