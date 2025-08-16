@@ -1,6 +1,9 @@
 import { ApiClient } from '../core/api.js';
 import { renderMarkdown, formatTime } from '../core/utils.js';
 
+/**
+ * ChatbotModule handles chatbot UI interactions and API communication.
+ */
 export class ChatbotModule {
     constructor() {
         this.apiClient = new ApiClient();
@@ -8,16 +11,22 @@ export class ChatbotModule {
         this.init();
     }
 
+    /**
+     * Initializes the chatbot module by binding events and checking status.
+     */
     init() {
         this.bindEvents();
         this.initializeChatbot();
     }
 
+    /**
+     * Binds UI events for chat input and message sending.
+     */
     bindEvents() {
         const chatInput = document.getElementById('chat-input');
         
         if (chatInput) {
-            // 엔터 키로 메시지 전송
+            // Send message on Enter key (without Shift)
             chatInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -25,17 +34,19 @@ export class ChatbotModule {
                 }
             });
             
-            // 텍스트 영역 자동 크기 조절
+            // Auto-resize textarea as user types
             chatInput.addEventListener('input', () => {
                 this.adjustTextareaHeight(chatInput);
             });
         }
     }
 
-    // 챗봇 초기화 및 상태 확인
+    /**
+     * Initializes chatbot session and updates status indicators.
+     */
     async initializeChatbot() {
         try {
-            // 새 세션 생성
+            // Create a new chat session
             const sessionResult = await this.apiClient.createNewSession();
             
             if (sessionResult.success) {
@@ -43,7 +54,7 @@ export class ChatbotModule {
                 console.log('새 세션 생성됨:', this.currentSessionId);
             }
             
-            // 챗봇 상태 확인
+            // Check chatbot status and update UI
             const statusResult = await this.apiClient.getChatbotStatus();
             
             const statusIndicator = document.getElementById('status-indicator');
@@ -60,6 +71,7 @@ export class ChatbotModule {
                 if (sendButton) sendButton.disabled = true;
             }
         } catch (error) {
+            // Handle errors and update UI accordingly
             console.error('챗봇 상태 확인 오류:', error);
             
             const statusIndicator = document.getElementById('status-indicator');
@@ -72,37 +84,43 @@ export class ChatbotModule {
         }
     }
 
-    // 메시지 전송
+    /**
+     * Sends a user message to the chatbot and displays the response.
+     */
     async sendMessage() {
         const chatInput = document.getElementById('chat-input');
         const message = chatInput.value.trim();
         
         if (!message) return;
         
-        // 사용자 메시지 추가
+        // Add user message to chat
         this.addMessage(message, 'user');
         chatInput.value = '';
         this.adjustTextareaHeight(chatInput);
         
-        // 타이핑 인디케이터 표시
+        // Show typing indicator while waiting for response
         this.showTypingIndicator();
         
         const result = await this.apiClient.sendChatMessage(message, this.currentSessionId);
         
-        // 타이핑 인디케이터 제거
+        // Remove typing indicator after response
         this.hideTypingIndicator();
         
         if (result.success) {
-            // 세션 ID 업데이트
+            // Update session ID and add bot response
             this.currentSessionId = result.data.session_id;
-            // 봇 응답 추가
             this.addMessage(result.data.response, 'bot');
         } else {
+            // Show error message from bot
             this.addMessage(`오류: ${result.error}`, 'bot');
         }
     }
 
-    // 메시지 추가
+    /**
+     * Adds a message to the chat UI.
+     * @param {string} content - Message text or markdown.
+     * @param {string} role - 'user' or 'bot'.
+     */
     addMessage(content, role) {
         const messagesContainer = document.getElementById('chat-messages');
         if (!messagesContainer) return;
@@ -113,7 +131,7 @@ export class ChatbotModule {
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
 
-        // 봇 메시지의 경우 마크다운 렌더링 적용
+        // Render markdown for bot messages
         if (role === 'bot') {
             contentDiv.innerHTML = renderMarkdown(content);
         } else {
@@ -128,10 +146,13 @@ export class ChatbotModule {
         messageDiv.appendChild(timeDiv);
         messagesContainer.appendChild(messageDiv);
         
+        // Scroll to bottom after adding message
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
-    // 타이핑 인디케이터 표시
+    /**
+     * Displays a typing indicator in the chat UI.
+     */
     showTypingIndicator() {
         const chatMessages = document.getElementById('chat-messages');
         if (!chatMessages) return;
@@ -152,7 +173,9 @@ export class ChatbotModule {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // 타이핑 인디케이터 숨기기
+    /**
+     * Removes the typing indicator from the chat UI.
+     */
     hideTypingIndicator() {
         const typingIndicator = document.getElementById('typing-indicator');
         if (typingIndicator) {
@@ -160,7 +183,9 @@ export class ChatbotModule {
         }
     }
 
-    // 새로운 채팅 시작
+    /**
+     * Starts a new chat session and resets the chat UI.
+     */
     async startNewChat() {
         const result = await this.apiClient.createNewSession();
         
@@ -168,7 +193,7 @@ export class ChatbotModule {
             this.currentSessionId = result.data.session_id;
             console.log('새 채팅 세션 시작:', this.currentSessionId);
             
-            // 채팅 메시지 초기화
+            // Reset chat messages and show welcome message
             const messagesContainer = document.getElementById('chat-messages');
             if (messagesContainer) {
                 messagesContainer.innerHTML = `
@@ -185,7 +210,10 @@ export class ChatbotModule {
         }
     }
 
-    // 텍스트 영역 자동 크기 조절
+    /**
+     * Automatically adjusts the height of the chat input textarea.
+     * @param {HTMLTextAreaElement} textarea 
+     */
     adjustTextareaHeight(textarea) {
         textarea.style.height = 'auto';
         textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';

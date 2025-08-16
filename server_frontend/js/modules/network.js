@@ -3,25 +3,28 @@ import { NETWORK_CONFIG } from '../core/config.js';
 import { showError, getRelationTypeKorean } from '../core/utils.js';
 import {} from './subjectSearch.js'
 
+// 네트워크 시각화 및 데이터 관리를 담당하는 모듈
 export class NetworkModule {
     constructor() {
         this.apiClient = new ApiClient();
-        this.networkData = { nodes: [], edges: [] };
-        this.simulation = null;
-        this.svg = null;
-        this.g = null;
-        this.expandedNodes = new Set();
-        this.isInitialized = false;
-        this.maxExpansionNodes = 5; // 기본값
+        this.networkData = { nodes: [], edges: [] }; // 네트워크 데이터
+        this.simulation = null; // D3 force 시뮬레이션 객체
+        this.svg = null; // SVG 요소
+        this.g = null; // 그래프 그룹 요소
+        this.expandedNodes = new Set(); // 확장된 노드 집합
+        this.isInitialized = false; // 초기화 여부
+        this.maxExpansionNodes = 5; // 최대 확장 노드 수 (기본값)
         this.init();
     }
 
+    // 모듈 초기화: 이벤트 바인딩, 시각화 초기화, 상태 복원
     init() {
         this.bindEvents();
         this.initializeVisualization();
         this.restoreNetworkState();
     }
 
+    // UI 이벤트 바인딩
     bindEvents() {
         // 씨앗 노드 검색 엔터 키 지원
         const seedQuery = document.getElementById('seed-query');
@@ -42,7 +45,7 @@ export class NetworkModule {
             this.maxExpansionNodes = parseInt(maxExpansionSelect.value);
         }
 
-        // 윈도우 리사이즈 이벤트
+        // 윈도우 리사이즈 시 SVG 및 시뮬레이션 크기 조정
         window.addEventListener('resize', () => {
             if (this.svg) {
                 const container = document.getElementById('network-visualization');
@@ -57,7 +60,7 @@ export class NetworkModule {
         });
     }
 
-    // 네트워크 시각화 초기화
+    // 네트워크 시각화 초기화 (SVG, D3 시뮬레이션 등)
     initializeVisualization() {
         const container = document.getElementById('network-visualization');
         const containerParent = container.parentElement;
@@ -67,6 +70,7 @@ export class NetworkModule {
 
         console.log('Network visualization init:', { width, height, containerParent });
 
+        // SVG 생성
         this.svg = d3.select('#network-visualization')
             .append('svg')
             .attr('width', width)
@@ -81,7 +85,7 @@ export class NetworkModule {
 
         this.svg.call(zoom);
 
-        // 그래프 요소들을 담을 그룹
+        // 그래프 요소 그룹 생성
         this.g = this.svg.append('g');
 
         // 화살표 마커 정의
@@ -99,7 +103,7 @@ export class NetworkModule {
             .attr('d', 'M0,-5L10,0L0,5')
             .attr('fill', '#999');
 
-        // 포스 시뮬레이션 초기화
+        // D3 force 시뮬레이션 초기화
         this.simulation = d3.forceSimulation()
             .force('link', d3.forceLink().id(d => d.node_id).distance(NETWORK_CONFIG.linkDistance))
             .force('charge', d3.forceManyBody().strength(NETWORK_CONFIG.chargeStrength))
@@ -109,8 +113,7 @@ export class NetworkModule {
         this.updateNetworkStats();
     }
 
-
-    // 네트워크 상태 저장
+    // 네트워크 상태 저장 (sessionStorage)
     saveNetworkState() {
         try {
             const state = {
@@ -125,14 +128,14 @@ export class NetworkModule {
         }
     }
 
-    // 네트워크 상태 복원
+    // 네트워크 상태 복원 (sessionStorage)
     restoreNetworkState() {
         try {
             const savedState = sessionStorage.getItem('networkState');
             if (savedState) {
                 const state = JSON.parse(savedState);
                 
-                // 1시간 이내 저장된 상태만 복원 (선택적)
+                // 1시간 이내 저장된 상태만 복원
                 const oneHour = 60 * 60 * 1000;
                 if (Date.now() - state.timestamp < oneHour) {
                     this.networkData = state.networkData;
@@ -163,12 +166,12 @@ export class NetworkModule {
         }
     }
 
-    // 네트워크 상태 초기화
+    // 네트워크 상태 초기화 (sessionStorage 삭제)
     clearNetworkState() {
         sessionStorage.removeItem('networkState');
     }
 
-    // 씨앗 노드 검색
+    // 씨앗 노드 검색 (API 호출)
     async searchSeedNode() {
         const query = document.getElementById('seed-query').value.trim();
         if (!query) return;
@@ -182,7 +185,7 @@ export class NetworkModule {
         }
     }
 
-    // 씨앗 후보들 표시
+    // 씨앗 후보들 표시 (검색 결과)
     displaySeedCandidates(candidates) {
         const container = document.getElementById('seed-candidates');
 
@@ -191,6 +194,7 @@ export class NetworkModule {
             return;
         }
 
+        // 후보 리스트 렌더링
         container.innerHTML = candidates.map(candidate => `
             <div class="seed-candidate" onclick="window.networkModule.selectSeedNode('${candidate.node_id}')">
                 <div class="seed-candidate-label">${candidate.label}</div>
@@ -199,7 +203,7 @@ export class NetworkModule {
         `).join('');
     }
 
-    // 씨앗 노드 선택
+    // 씨앗 노드 선택 및 네트워크 초기화
     async selectSeedNode(nodeId) {
         // 기존 네트워크 초기화
         this.networkData = { nodes: [], edges: [] };
@@ -260,7 +264,7 @@ export class NetworkModule {
         this.showNetworkLoading(false);
     }
 
-    // 네트워크 로딩 표시
+    // 네트워크 로딩 오버레이 표시/숨김
     showNetworkLoading(show, message = '로딩 중...') {
         const container = document.getElementById('network-visualization');
 
@@ -298,7 +302,7 @@ export class NetworkModule {
         }
     }
 
-    // 네트워크 시각화 업데이트
+    // 네트워크 시각화 업데이트 (노드/엣지/라벨 등)
     updateNetworkVisualization() {
         // 기존 요소들 제거
         this.g.selectAll('*').remove();
@@ -316,14 +320,14 @@ export class NetworkModule {
                 this.hideTooltip();
             });
 
-        // 연결 라벨
+        // 연결 라벨 표시
         const linkLabel = this.g.selectAll('.link-label')
             .data(this.networkData.edges)
             .enter().append('text')
             .attr('class', 'link-label')
             .text(d => getRelationTypeKorean(d.relation_type));
 
-        // 노드 그리기 (주제 노드는 원형, 도서 노드는 사각형)
+        // 노드 그룹 생성 (주제/도서)
         const nodeGroup = this.g.selectAll('.node-group')
             .data(this.networkData.nodes)
             .enter().append('g')
@@ -356,7 +360,7 @@ export class NetworkModule {
             .attr('x', -NETWORK_CONFIG.nodeRadius)
             .attr('y', -NETWORK_CONFIG.nodeRadius * 0.75);
 
-        // 모든 노드에 공통 이벤트 적용
+        // 모든 노드에 공통 이벤트 적용 (클릭, 마우스오버 등)
         const allNodes = nodeGroup.selectAll('.node')
             .on('click', (event, d) => {
                 event.stopPropagation();
@@ -371,7 +375,7 @@ export class NetworkModule {
 
         const node = allNodes;
 
-        // 노드 라벨
+        // 노드 라벨 표시
         const nodeLabel = this.g.selectAll('.node-label')
             .data(this.networkData.nodes)
             .enter().append('text')
@@ -385,7 +389,7 @@ export class NetworkModule {
             .on('drag', (event, d) => this.dragged(event, d))
             .on('end', (event, d) => this.dragended(event, d)));
 
-        // 시뮬레이션 업데이트
+        // 시뮬레이션 tick 이벤트: 위치 업데이트
         this.simulation.nodes(this.networkData.nodes);
         this.simulation.force('link').links(this.networkData.edges);
 
@@ -412,7 +416,7 @@ export class NetworkModule {
         this.simulation.restart();
     }
 
-    // 툴팁 표시
+    // 노드 툴팁 표시
     showTooltip(event, d) {
         const tooltip = document.getElementById('network-tooltip');
         let content = `<strong>${d.label}</strong>`;
@@ -433,24 +437,16 @@ export class NetworkModule {
 
         let content = `<strong>연결 유형:</strong> ${getRelationTypeKorean(d.relation_type)}`;
 
-        if (d.metadata) {
-            try {
-                const metadata = typeof d.metadata === 'string' ? JSON.parse(d.metadata) : d.metadata;
-                if (metadata.similarity) {
-                    content += `<br><strong>유사도:</strong> ${(metadata.similarity * 100).toFixed(2)}%`;
-                }
-                if (metadata.predicate) {
-                    content += `<br><strong>관계:</strong> ${metadata.predicate}`;
-                }
-                if (metadata.description) {
-                    content += `<br><strong>설명:</strong> ${metadata.description}`;
-                } 
-
-            } catch (e) {
-                // JSON 파싱 실패 시 무시
-            }
+        if (d.similarity) {
+            content += `<br><strong>유사도:</strong> ${(d.similarity * 100).toFixed(2)}%`;
         }
-        
+        if (d.predicate) {
+            content += `<br><strong>관계:</strong> ${d.predicate}`;
+        }
+        if (d.description) {
+            content += `<br><strong>설명:</strong> ${d.description}`;
+        } 
+
         const [x, y] = d3.pointer(event);
         tooltip.innerHTML = content;
         tooltip.className = 'network-tooltip visible';
@@ -510,6 +506,7 @@ export class NetworkModule {
             action: () => this.removeNode(d.node_id)
         });
 
+        // 메뉴 렌더링
         contextMenu.innerHTML = menuItems.map((item, index) => `
             <div class="context-menu-item" data-action="${index}">
                 <span class="menu-icon">${item.icon}</span>
@@ -527,7 +524,7 @@ export class NetworkModule {
             }
         });
 
-        // 메뉴 위치 설정
+        // 메뉴 위치 설정 (SVG 기준)
         const rect = event.target.getBoundingClientRect();
         const svgRect = this.svg.node().getBoundingClientRect();
         
@@ -573,7 +570,7 @@ export class NetworkModule {
         }
     }
 
-    // 네트워크에서 주제 세부 정보 표시
+    // 네트워크에서 주제 세부 정보 표시 (외부 모듈 호출)
     async showSubjectDetailsFromNetwork(nodeId) {
         // 주제 검색 모듈의 showSubjectDetails 함수 사용
         if (window.subjectSearchModule && typeof window.subjectSearchModule.showSubjectDetails === 'function') {
@@ -583,7 +580,7 @@ export class NetworkModule {
         }
     }
 
-    // 네트워크에서 도서 세부 정보 표시
+    // 네트워크에서 도서 세부 정보 표시 (외부 모듈 호출)
     async showBookDetailsFromNetwork(nodeId) {
         // 도서 검색 모듈의 showBookDetails 함수 사용
         if (window.bookSearchModule && typeof window.bookSearchModule.showBookDetails === 'function') {
@@ -593,7 +590,7 @@ export class NetworkModule {
         }
     }
 
-    // 관련 도서 표시
+    // 관련 도서 표시 (API 호출 및 네트워크에 추가)
     async showRelatedBooks(nodeId) {
         this.showNetworkLoading(true, '관련 도서 검색 중...');
 
@@ -639,7 +636,7 @@ export class NetworkModule {
         this.showNetworkLoading(false);
     }
 
-    // 노드 삭제
+    // 노드 삭제 (네트워크 및 시각화에서 제거)
     removeNode(nodeId) {
         // 노드 삭제
         this.networkData.nodes = this.networkData.nodes.filter(n => n.node_id !== nodeId);
@@ -654,7 +651,7 @@ export class NetworkModule {
         // 확장된 노드 목록에서도 제거
         this.expandedNodes.delete(nodeId);
 
-        // 시각화 업데이트
+        // 시각화 및 통계 업데이트
         this.updateNetworkVisualization();
         this.updateNetworkStats();
 
@@ -662,7 +659,7 @@ export class NetworkModule {
         this.saveNetworkState();
     }
 
-    // 네트워크 통계 업데이트
+    // 네트워크 통계 업데이트 (노드/엣지 수, 리셋 버튼 상태)
     updateNetworkStats() {
         const nodeCount = document.getElementById('node-count');
         const edgeCount = document.getElementById('edge-count');
@@ -673,7 +670,7 @@ export class NetworkModule {
         if (resetBtn) resetBtn.disabled = this.networkData.nodes.length === 0;
     }
 
-    // 네트워크 리셋
+    // 네트워크 리셋 (초기화)
     resetNetwork() {
         this.networkData = { nodes: [], edges: [] };
         this.expandedNodes.clear();
@@ -692,7 +689,7 @@ export class NetworkModule {
         this.isInitialized = false;
     }
 
-    // 드래그 이벤트 핸들러들
+    // 드래그 이벤트 핸들러들 (D3)
     dragstarted(event, d) {
         if (!event.active) this.simulation.alphaTarget(0.3).restart();
         d.fx = d.x;
@@ -710,7 +707,7 @@ export class NetworkModule {
         d.fy = null;
     }
 
-    // 메뉴 전환 시 재초기화
+    // 메뉴 전환 시 재초기화 (SVG 및 시각화 재생성)
     reinitialize() {
         setTimeout(() => {
             if (this.svg) {

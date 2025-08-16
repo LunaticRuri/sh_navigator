@@ -6,7 +6,8 @@ from fastapi import HTTPException
 
 import google.generativeai as genai
 
-from schemas.chat import ChatMessage, ChatResponse
+from schemas.chat import ChatMessage, ChatResponse, UserNeeds, UserNeedsAnalysis
+from chatbot.chat_pipeline import analyze_user_needs
 from chatbot.chat_manager import chat_session_manager
 from core.utils import format_gemini_chat_history, get_system_prompt
 from core.config import GEMINI_API_KEY, GEMINI_MODEL
@@ -62,6 +63,12 @@ class ChatService:
             # Retrieve conversation history for the session
             history = chat_session_manager.get_session_history(session_id)
 
+            # TODO: 여기에 메인 로직 추가해야 함!
+            
+            needs : UserNeedsAnalysis = analyze_user_needs(client=self.model, user_input=chat_message.content)
+            if not needs.needs_exist:
+                ...
+            
             # Generate response using Gemini API
             response_text = await self._generate_response(chat_message.content, history)
             

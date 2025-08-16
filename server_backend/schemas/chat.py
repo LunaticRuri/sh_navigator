@@ -85,3 +85,15 @@ class SessionResponse(BaseModel):
     session_id: str = Field(..., description="Session identifier")
     messages: List[Dict] = Field(..., description="Session messages")
     message_count: int = Field(..., description="Number of messages")
+
+
+class UserNeeds(BaseModel):
+    _subject: str = Field(..., description="Subject of the user need")
+    _predicate: str = Field(..., description="Predicate of the user need")
+    _object: str = Field(..., description="Object of the user need")
+    keywords: List[str] = Field(..., min_items=3, description="Keywords related to the user need")
+
+class UserNeedsAnalysis(BaseModel):
+    """Model for user needs analysis response"""
+    needs_exist: bool = Field(..., description="Indicates if user needs exist")
+    needs: Optional[List[UserNeeds]] = Field(..., description="List of user needs extracted from input")

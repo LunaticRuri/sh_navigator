@@ -1,6 +1,12 @@
 import { ApiClient } from '../core/api.js';
 import { showLoading, clearResults, showError, truncateText, escapeHtml, getRelationTypeKorean} from '../core/utils.js';
 
+/**
+ * BookSearchModule
+ * - Handles book searching, displaying results, pagination, and book details.
+ * - Supports general, advanced, and vector-based search.
+ * - Integrates with subject search and book detail page.
+ */
 export class BookSearchModule {
     constructor() {
         this.apiClient = new ApiClient();
@@ -10,12 +16,18 @@ export class BookSearchModule {
         this.init();
     }
 
+    /**
+     * Initialize module (bind events)
+     */
     init() {
         this.bindEvents();
     }
 
+    /**
+     * Bind search input events (Enter key for search)
+     */
     bindEvents() {
-        // 일반 검색 엔터 키 지원
+        // General search input
         const generalQuery = document.getElementById('general-query');
         if (generalQuery) {
             generalQuery.addEventListener('keypress', (e) => {
@@ -23,7 +35,7 @@ export class BookSearchModule {
             });
         }
 
-        // 상세 검색 필드들 엔터 키 지원
+        // Advanced search fields (title, isbn, vector)
         ['title-search', 'isbn-search', 'vector-query'].forEach(id => {
             const element = document.getElementById(id);
             if (element) {
@@ -40,7 +52,9 @@ export class BookSearchModule {
         });
     }
 
-    // 일반 검색
+    /**
+     * Perform general search (by keyword)
+     */
     async performGeneralSearch() {
         const query = document.getElementById('general-query').value.trim();
         if (!query) {
@@ -53,7 +67,9 @@ export class BookSearchModule {
         await this.searchBooks();
     }
 
-    // 상세 검색
+    /**
+     * Perform advanced search (by title and/or ISBN)
+     */
     async performAdvancedSearch() {
         const title = document.getElementById('title-search').value.trim();
         const isbn = document.getElementById('isbn-search').value.trim();
@@ -68,7 +84,9 @@ export class BookSearchModule {
         await this.searchBooks();
     }
 
-    // 벡터 검색
+    /**
+     * Perform vector-based search
+     */
     async performVectorSearch() {
         const query = document.getElementById('vector-query').value.trim();
         const limit = document.getElementById('vector-limit').value;
@@ -83,7 +101,9 @@ export class BookSearchModule {
         await this.searchBooks();
     }
 
-    // 도서 검색 실행
+    /**
+     * Execute book search using currentSearch parameters
+     */
     async searchBooks() {
         if (!this.currentSearch) return;
 
@@ -108,12 +128,15 @@ export class BookSearchModule {
         showLoading(false, 'book');
     }
 
-    // 검색 결과 표시
+    /**
+     * Display search results in the UI
+     * @param {Object} data - Search result data
+     */
     displayResults(data) {
         const container = document.getElementById('results-book-container');
         const searchInfo = document.getElementById('search-book-info');
 
-        // 검색 정보 표시
+        // Show search info
         if (data.total_count === 0) {
             searchInfo.innerHTML = `<strong>검색 결과:</strong> 총 0권의 도서가 검색되었습니다.`;
         } else {
@@ -123,7 +146,7 @@ export class BookSearchModule {
             `;
         }
 
-        // 결과가 없는 경우
+        // No results
         if (data.results.length === 0) {
             container.innerHTML = `
                 <div style="text-align: center; padding: 40px; color: #666;">
@@ -134,7 +157,7 @@ export class BookSearchModule {
             return;
         }
 
-        // 도서 목록 표시
+        // Render book list
         container.innerHTML = data.results.map(book => `
             <div class="book-item" onclick="window.bookSearchModule.showBookDetails('${book.isbn}')">
                 <div class="book-title">${book.title || '제목 없음'}</div>
@@ -148,7 +171,10 @@ export class BookSearchModule {
         this.totalPages = data.total_pages;
     }
 
-    // 페이지네이션 업데이트
+    /**
+     * Update pagination controls
+     * @param {Object} data - Search result data
+     */
     updatePagination(data) {
         const pagination = document.getElementById('pagination-book');
         const totalPages = data.total_pages;
@@ -161,14 +187,14 @@ export class BookSearchModule {
 
         let paginationHTML = '';
 
-        // 이전 페이지 버튼
+        // Previous page button
         paginationHTML += `
             <button onclick="window.bookSearchModule.goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
                 ← 이전
             </button>
         `;
 
-        // 페이지 번호 버튼들
+        // Page number buttons
         const startPage = Math.max(1, currentPage - 2);
         const endPage = Math.min(totalPages, currentPage + 2);
 
@@ -194,7 +220,7 @@ export class BookSearchModule {
             paginationHTML += `<button onclick="window.bookSearchModule.goToPage(${totalPages})">${totalPages}</button>`;
         }
 
-        // 다음 페이지 버튼
+        // Next page button
         paginationHTML += `
             <button onclick="window.bookSearchModule.goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
                 다음 →
@@ -204,14 +230,20 @@ export class BookSearchModule {
         pagination.innerHTML = paginationHTML;
     }
 
-    // 페이지 이동
+    /**
+     * Go to a specific page in pagination
+     * @param {number} page - Target page number
+     */
     async goToPage(page) {
         if (page < 1 || page > this.totalPages) return;
         this.currentPage = page;
         await this.searchBooks();
     }
 
-    // 도서 상세 정보 표시
+    /**
+     * Show book details in modal
+     * @param {string} isbn - Book ISBN
+     */
     async showBookDetails(isbn) {
         const result = await this.apiClient.getBookDetails(isbn);
 
@@ -220,6 +252,7 @@ export class BookSearchModule {
             const modal = document.getElementById('book-modal');
             const details = document.getElementById('book-details');
 
+            // Render book details modal
             details.innerHTML = `
                 <h2 class="book-detail-title">${book.title || '제목 없음'}</h2>
                 
@@ -239,7 +272,7 @@ export class BookSearchModule {
                     ` : ''}
                 </div>
 
-                <!-- 상세 페이지로 이동 버튼 -->
+                <!-- Button to go to detail page -->
                 <div class="modal-actions">
                     <button class="detail-page-button" onclick="window.bookSearchModule.goToBookDetailPage('${book.isbn}')">
                         📖 상세 페이지에서 더 보기
@@ -278,28 +311,28 @@ export class BookSearchModule {
         }
     }
 
-    // NLK 주제들을 예쁘게 포맷팅 (모달용)
+    /**
+     * Format NLK subjects for modal display
+     * @param {Array|string} subjects - NLK subjects data
+     * @returns {string} HTML
+     */
     formatNlkSubjects(subjects) {
         try {
-            // 문자열인 경우 JSON 파싱
+            // Parse if string
             const subjectsData = typeof subjects === 'string' ? JSON.parse(subjects) : subjects;
-            // 배열이 아닌 경우 그대로 반환
             if (!Array.isArray(subjectsData)) {
                 return `<p>${subjects}</p>`;
             }
-            
-            // 빈 배열인 경우 빈 문자열 반환
             if (subjectsData.length === 0) {
                 return '';
             }
-            
-            // 각 주제를 클릭 가능하게 수정
+            // Render clickable subject items
             return subjectsData.map(subject => {
                 const label = subject.label || '주제명 없음';
                 const type = subject.type || '';
                 const id = subject.id || '';
 
-                // HTML 이스케이프 처리
+                // Escape HTML
                 const safeId = escapeHtml(id);
                 const safeLabel = escapeHtml(label);
                 const safeType = escapeHtml(type);
@@ -314,21 +347,25 @@ export class BookSearchModule {
             }).join('');
 
         } catch (error) {
-            // JSON 파싱 실패 시 원본 텍스트 그대로 표시
+            // Fallback on parse error
             console.warn('NLK subjects 파싱 실패:', error);
             return `<p>${subjects}</p>`;
         }
     }
 
-    // 주제 모달 열기 (주제 검색 모듈의 모달 사용)
+    /**
+     * Open subject modal (delegates to subjectSearchModule if available)
+     * @param {string} subjectId 
+     * @param {string} subjectLabel 
+     */
     async openSubjectModal(subjectId, subjectLabel) {
         try {
-            // 주제 검색 모듈의 showSubjectDetails 함수 사용
+            // Use subjectSearchModule if available
             if (window.subjectSearchModule && typeof window.subjectSearchModule.showSubjectDetails === 'function') {
                 await window.subjectSearchModule.showSubjectDetails(subjectId);
             } else {
                 console.error('주제 검색 모듈을 찾을 수 없습니다');
-                // 폴백: 기본 주제 모달 표시
+                // Fallback: show basic subject modal
                 this.showSubjectExploreModal({
                     node_id: subjectId,
                     label: subjectLabel,
@@ -338,7 +375,7 @@ export class BookSearchModule {
             }
         } catch (error) {
             console.error('주제 정보 로드 실패:', error);
-            // 오류 발생 시 기본 정보로 모달 표시
+            // Fallback on error
             this.showSubjectExploreModal({
                 node_id: subjectId,
                 label: subjectLabel,
@@ -348,7 +385,10 @@ export class BookSearchModule {
         }
     }
 
-    // 주제 탐색 모달 표시
+    /**
+     * Show subject explore modal (basic subject info)
+     * @param {Object} subject 
+     */
     showSubjectExploreModal(subject) {
         const modal = document.getElementById('subject-explore-modal');
         const content = document.getElementById('subject-explore-content');
@@ -383,7 +423,7 @@ export class BookSearchModule {
                                         metadataInfo += ` <span class="metadata-info">(유사도: ${(metadata.similarity * 100).toFixed(1)}%)</span>`;
                                     }
                                 } catch (e) {
-                                    // JSON 파싱 실패 시 무시
+                                    // Ignore parse error
                                 }
                             }
 
@@ -421,64 +461,76 @@ export class BookSearchModule {
         modal.style.display = 'block';
     }
 
-    // 관련 도서 검색
+    /**
+     * Search books related to a subject (by subject label)
+     * @param {string} subjectId 
+     * @param {string} subjectLabel 
+     */
     async searchRelatedBooks(subjectId, subjectLabel) {
-        // 주제 탐색 모달 닫기
+        // Close subject explore modal
         document.getElementById('subject-explore-modal').style.display = 'none';
         
-        // 주제 모달도 닫기 (주제 검색 모듈의 모달)
+        // Close subject modal (if exists)
         const subjectModal = document.getElementById('subject-modal');
         if (subjectModal) {
             subjectModal.style.display = 'none';
         }
         
-        // 도서 모달도 닫기
+        // Close book modal
         document.getElementById('book-modal').style.display = 'none';
         
-        // 주제명으로 도서 검색 수행
+        // Search books by subject label
         document.getElementById('general-query').value = subjectLabel;
         await this.performGeneralSearch();
     }
 
-    // 책 상세 페이지로 이동
+    /**
+     * Go to book detail page (switch UI and load details)
+     * @param {string} isbn 
+     */
     async goToBookDetailPage(isbn) {
-        // 모달 닫기
+        // Close all modals
         document.getElementById('subject-modal').style.display = 'none';
         document.getElementById('subject-explore-modal').style.display = 'none';
         document.getElementById('book-modal').style.display = 'none';
         
-        // 현재 메뉴 상태 저장 (돌아가기 기능을 위해)
+        // Save previous menu for back navigation
         this.previousMenu = 'book';
         
-        // 책 상세 페이지로 전환
+        // Switch to book detail page
         this.switchToBookDetailPage();
         
-        // 상세 정보 로드
+        // Load book details
         await this.loadBookDetailPage(isbn);
     }
 
-    // 책 상세 페이지로 전환
+    /**
+     * Switch UI to book detail page
+     */
     switchToBookDetailPage() {
-        // 모든 섹션 숨기기
+        // Hide all content sections
         document.querySelectorAll('.content-section').forEach(section => {
             section.classList.remove('active');
         });
         
-        // 책 상세 페이지 표시
+        // Show book detail page
         document.getElementById('book-detail-page').classList.add('active');
         
-        // 사이드바 메뉴 상태 업데이트 (선택적)
+        // Update sidebar menu state (optional)
         document.querySelectorAll('.menu-item').forEach(item => {
             item.classList.remove('active');
         });
     }
 
-    // 책 상세 페이지 로드
+    /**
+     * Load book detail page content
+     * @param {string} isbn 
+     */
     async loadBookDetailPage(isbn) {
         const content = document.getElementById('book-detail-content');
         const title = document.getElementById('book-detail-page-title');
         
-        // 로딩 표시
+        // Show loading spinner
         content.innerHTML = `
             <div class="loading-container">
                 <div class="loading-spinner"></div>
@@ -492,13 +544,13 @@ export class BookSearchModule {
             if (result.success) {
                 const book = result.data;
                 
-                // 페이지 제목 업데이트
+                // Update page title
                 title.textContent = book.title || '도서 상세 정보';
                 
-                // 상세 페이지 내용 렌더링
+                // Render book detail content
                 content.innerHTML = `
                     <div class="book-detail-container">
-                        <!-- 도서 기본 정보 -->
+                        <!-- Basic book info -->
                         <div class="detail-section">
                             <h2>기본 정보</h2>
                             <div class="info-grid">
@@ -557,6 +609,7 @@ export class BookSearchModule {
                 throw new Error(result.error);
             }
         } catch (error) {
+            // Show error and back button
             content.innerHTML = `
                 <div class="error-container">
                     <h2>❌ 오류가 발생했습니다</h2>
@@ -569,37 +622,37 @@ export class BookSearchModule {
         }
     }
     
-    // 상세 페이지용 NLK 주제 포맷팅
+    /**
+     * Format NLK subjects for detail page
+     * @param {Array|string} nlkSubjects 
+     * @returns {string} HTML
+     */
     formatNlkSubjectsDetailed(nlkSubjects) {
-        
         try {
             let subjectsData;
             
-            // 문자열인 경우 JSON 파싱
+            // Parse if string
             if (typeof nlkSubjects === 'string') {
                 subjectsData = JSON.parse(nlkSubjects);
             } else {
                 subjectsData = nlkSubjects;
             }
             
-            // 배열이 아닌 경우 빈 문자열 반환
             if (!Array.isArray(subjectsData)) {
                 console.warn('주제 데이터가 배열이 아닙니다:', subjectsData);
                 return '<div class="no-subjects">주제 분류 정보가 없습니다.</div>';
             }
-            
-            // 빈 배열인 경우 빈 문자열 반환
             if (subjectsData.length === 0) {
                 return '<div class="no-subjects">주제 분류 정보가 없습니다.</div>';
             }
             
-            // 각 주제를 카드 형태로 표시
+            // Render subject cards
             return subjectsData.map(subject => {
                 const label = subject.label || '주제명 없음';
                 const id = subject.id || '';
                 const type = subject.type || '';
                 
-                // HTML 이스케이프 처리
+                // Escape HTML
                 const safeId = escapeHtml(id);
                 const safeLabel = escapeHtml(label);
                 const safeType = escapeHtml(type);
@@ -620,23 +673,25 @@ export class BookSearchModule {
         }
     }
 
-    // 책 상세 페이지에서 돌아가기
+    /**
+     * Go back from book detail page to previous menu
+     */
     goBackFromBookDetail() {
-        // 책 상세 페이지 숨기기
+        // Hide book detail page
         document.getElementById('book-detail-page').classList.remove('active');
         
-        // 이전 메뉴로 돌아가기 (기본값: 책 검색)
+        // Restore previous menu section (default: book)
         const previousMenu = this.previousMenu || 'book';
         
-        // 모든 섹션 숨기기
+        // Hide all sections
         document.querySelectorAll('.content-section').forEach(section => {
             section.classList.remove('active');
         });
         
-        // 이전 섹션 표시
+        // Show previous section
         document.getElementById(`${previousMenu}-section`).classList.add('active');
         
-        // 사이드바 메뉴 상태 업데이트
+        // Update sidebar menu state
         document.querySelectorAll('.menu-item').forEach(item => {
             item.classList.remove('active');
         });
@@ -647,7 +702,9 @@ export class BookSearchModule {
         }
     }
 
-    // 탭 전환 시 검색 결과 초기화
+    /**
+     * Clear search results and reset state (on tab switch)
+     */
     clearSearchResults() {
         clearResults('book');
         this.currentSearch = null;
