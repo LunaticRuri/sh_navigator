@@ -19,7 +19,8 @@ from core.utils import (
 )
 from core.config import (
     MAX_QUERY_LENGTH,
-    MODEL_SERVER_URL
+    MODEL_SERVER_URL,
+    NETWORK_SERVER_URL
 )
 
 logger = logging.getLogger(__name__)
@@ -133,20 +134,54 @@ class SubjectService:
                 if not subject_data:
                     raise HTTPException(status_code=404, detail="주제를 찾을 수 없습니다.")
                 
-                # Get relations
-                relations = await self._get_subject_relations(cursor, node_id)
-                
-                return SubjectResponse(
-                    node_id=subject_data['node_id'],
-                    label=subject_data['label'],
-                    definition=subject_data['definition'] or '',
-                    relations=relations
+            # Get relations
+            response = await self.http_client.get(
+                f"{NETWORK_SERVER_URL}/node/neighbors",
+                params={"node_id": node_id}
                 )
+            response.raise_for_status()
+            neighbors_data = response.json()
+
+            relations = []
+
+            for neighbor in neighbors_data.get('nodes', []):
+                for relation in neighbors_data.get('edges', []):
+                    if relation['target_id'] == neighbor['node_id']:
+                        relation_dict ={
+                            "source_id": relation["source_id"],
+                            "target_id": relation["target_id"],
+                            "target_label": neighbor["label"],
+                            "relation_type": relation["relation_type"]
+                        }
+                        
+                        if relation["relation_type"] == "cosine_related" or relation["relation_type"] == "generated":
+                            relation_dict['source'] = 'embeddings'
+                        else:
+                            relation_dict['source'] = 'nlk'
+                        
+                        if 'similarity' in relation:
+                            relation_dict['similarity'] = relation['similarity']
+                        if 'predicate' in relation:
+                            relation_dict['predicate'] = relation['predicate']
+                        if 'description' in relation:
+                            relation_dict['description'] = relation['description']
+
+                        relations.append(relation_dict)
+            
+            # Sort relations by relation type
+            relations = sort_relations_by_priority(relations)
+
+            return SubjectResponse(
+                node_id=subject_data['node_id'],
+                label=subject_data['label'],
+                definition=subject_data['definition'] or '',
+                relations=relations
+            )
                 
         except HTTPException:
             raise
         except Exception as e:
-            logger.error(f"Error getting subject by node_id {node_id}: {e}")
+            logger.error(f"Error getting subject by node_id {node_id}: {e}", exc_info=True)
             raise HTTPException(status_code=500, detail="주제 조회 중 오류가 발생했습니다.")
 
     async def vector_search_subjects(
@@ -378,57 +413,6 @@ class SubjectService:
         
         await cursor.execute(query, node_id_list)
         return await cursor.fetchall()
-
-    async def _get_subject_relations(self, cursor, node_id: str) -> List[Dict[str, Any]]:
-        """
-        Get relations for a specific subject.
-        
-        Args:
-            cursor: Database cursor
-            node_id: Subject node ID
-            
-        Returns:
-            List of relation dictionaries
-        """
-        await cursor.execute("""
-            SELECT 
-                r.source_id,
-                r.target_id,
-                s2.label AS target_label,
-                r.relation_type,
-                r.metadata
-            FROM relations r
-            JOIN subjects s1 ON r.source_id = s1.node_id
-            LEFT JOIN subjects s2 ON r.target_id = s2.node_id
-            WHERE r.source_id = ?
-            ORDER BY r.relation_type, s2.label;
-        """, (node_id,))
-        
-        relations = await cursor.fetchall()
-        
-        # Convert to dictionaries and add similarity scores
-        relations_list = []
-        for rel in relations:
-            relation_dict = {
-                "source_id": rel["source_id"],
-                "target_id": rel["target_id"],
-                "target_label": rel["target_label"],
-                "relation_type": rel["relation_type"],
-                "metadata": rel["metadata"]
-            }
-            
-            # Add similarity score for cosine relations
-            if rel["relation_type"] == "cosine_related":
-                metadata = safe_json_parse(rel["metadata"], {})
-                relation_dict["_similarity"] = metadata.get("similarity", 0)
-            
-            relations_list.append(relation_dict)
-        
-        # Sort and limit relations
-        relations_list = sort_relations_by_priority(relations_list)
-        relations_list = limit_relations(relations_list, 20)
-        
-        return relations_list
 
     async def _get_node_neighbors(self, cursor, node_id: str, limit: int) -> List[Dict]:
         """

@@ -1496,7 +1496,7 @@ body {
 
 /* 관련 도서 스타일 개선 */
 .related-books-list {
-    max-height: 400px;
+    max-height: 600px;
     overflow-y: auto;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-md);
@@ -2115,6 +2115,8 @@ body {
 /* 관련 도서 그리드 */
 .related-books-grid {
     display: grid;
+    max-height: 600px;
+    overflow-y: auto;
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: var(--spacing-lg);
 }
@@ -2166,6 +2168,8 @@ body {
 /* 관련 주제 그리드 */
 .relations-grid {
     display: grid;
+    max-height: 1000px;
+    overflow-y: auto;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: var(--spacing-lg);
 }

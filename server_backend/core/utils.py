@@ -93,29 +93,16 @@ def sort_relations_by_priority(relations: List[Dict[str, Any]]) -> List[Dict[str
         "broader": 0,
         "narrower": 1,
         "related": 2,
-        "cosine_related": 3
+        "cosine_related": 3,
+        "generated": 4
     }
-    
-    # Add similarity scores for cosine_related relations
-    for relation in relations:
-        if relation.get("relation_type") == "cosine_related":
-            try:
-                metadata = relation.get("metadata", "{}")
-                if isinstance(metadata, str):
-                    import json
-                    metadata = json.loads(metadata)
-                relation["_similarity"] = metadata.get("similarity", 0)
-            except (json.JSONDecodeError, TypeError):
-                relation["_similarity"] = 0
-        else:
-            relation["_similarity"] = 0
     
     # Sort by priority first, then by similarity (descending)
     return sorted(
         relations,
         key=lambda x: (
-            priority_order.get(x.get("relation_type", ""), 4),
-            -x.get("_similarity", 0)
+            priority_order.get(x.get("relation_type", ""), 5),
+            -x.get("similarity", 0)
         )
     )
 

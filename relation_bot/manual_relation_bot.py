@@ -127,6 +127,15 @@ def update_main_db():
         ]
 
     for prediction in tqdm(predictions, desc="Updating main database"):
+        # Skip if source or target ID is corrupted
+        cursor.execute(
+            "SELECT * FROM subjects WHERE node_id = ? OR node_id = ?",
+            (prediction.source_id, prediction.target_id)
+        )
+        if len(cursor.fetchall()) != 2:
+            print(f"Skipping corrupted prediction: {prediction.source_id} -> {prediction.target_id}")
+            continue
+
         # If prediction is not related, record in history and skip
         if not prediction.is_related:
             with sqlite3.connect(RELATION_BOT_DATABASE) as relation_conn:

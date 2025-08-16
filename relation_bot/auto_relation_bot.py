@@ -166,8 +166,19 @@ class AutoRelationBot:
 
         with sqlite3.connect(MAIN_DATABASE) as conn:
             cursor = conn.cursor()
+            
             # Update main database for each prediction
             for prediction in tqdm(predictions, desc="Updating main database"):
+                
+                # Skip if source or target ID is corrupted
+                cursor.execute(
+                    "SELECT * FROM subjects WHERE node_id = ? OR node_id = ?",
+                    (prediction.source_id, prediction.target_id)
+                )
+                if len(cursor.fetchall()) != 2:
+                    print(f"Skipping corrupted prediction: {prediction.source_id} -> {prediction.target_id}")
+                    continue
+            
                 # Skip if not related
                 if not prediction.is_related:
                     continue

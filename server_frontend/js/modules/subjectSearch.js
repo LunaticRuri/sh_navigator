@@ -232,7 +232,7 @@ export class SubjectSearchModule {
                     </div>
                     ${subject.relations && subject.relations.length > 0 ? `
                         <div class="meta-item">
-                            <strong>관련 주제 수(최대 20개로 제한):</strong> ${subject.relations.length}개
+                            <strong>관련 주제 수:</strong> ${subject.relations.length}개
                         </div>
                     ` : ''}
                     ${subject.definition ? `
@@ -260,24 +260,15 @@ export class SubjectSearchModule {
                 const relationTypeKorean = getRelationTypeKorean(relation.relation_type);
 
                 let metadataInfo = '';
-                if (relation.metadata) {
-                    try {
-                        const metadata = typeof relation.metadata === 'string'
-                            ? JSON.parse(relation.metadata)
-                            : relation.metadata;
 
-                        if (metadata.similarity) {
-                            metadataInfo += ` <span class="metadata-info">(유사도: ${(metadata.similarity * 100).toFixed(1)}%)</span>`;
-                        }
-                        if (metadata.source === 'nlk') {
-                            metadataInfo += ' <span class="metadata-info">(출처: NLSH)</span>';
-                        }
-                        if (metadata.source === 'cosine') {
-                            metadataInfo += ' <span class="metadata-info">(출처: Embeddings)</span>';
-                        }
-                    } catch (e) {
-                        // JSON 파싱 실패 시 무시
-                    }
+                if (relation.similarity) {
+                    metadataInfo += ` <span class="metadata-info">(유사도: ${(relation.similarity * 100).toFixed(1)}%)</span>`;
+                }
+                if (relation.source === 'nlk') {
+                    metadataInfo += ' <span class="metadata-info">(출처: NLSH)</span>';
+                }
+                if (relation.source === 'embeddings') {
+                    metadataInfo += ' <span class="metadata-info">(출처: Embeddings)</span>';
                 }
 
                 return `
@@ -423,7 +414,7 @@ export class SubjectSearchModule {
                 // 관련 도서 정보 가져오기
                 let relatedBooksHTML = '';
                 try {
-                    const booksResult = await this.apiClient.getSubjectRelatedBooks(nodeId, 20);
+                    const booksResult = await this.apiClient.getSubjectRelatedBooks(nodeId);
                     if (booksResult.success && booksResult.data.books && booksResult.data.books.length > 0) {
                         relatedBooksHTML = `
                             <div class="detail-section">
@@ -490,31 +481,23 @@ export class SubjectSearchModule {
                     const relationTypeKorean = getRelationTypeKorean(relation.relation_type);
 
                     let metadataInfo = '';
-                    if (relation.metadata) {
-                        try {
-                            const metadata = typeof relation.metadata === 'string'
-                                ? JSON.parse(relation.metadata)
-                                : relation.metadata;
 
-                            if (metadata.similarity) {
-                                metadataInfo += `<div class="similarity-score">유사도: ${(metadata.similarity * 100).toFixed(1)}%</div>`;
-                            }
-                            if (metadata.source === 'nlk') {
-                                metadataInfo += '<div class="source-info">출처: NLSH</div>';
-                            }
-                            if (metadata.source === 'cosine') {
-                                metadataInfo += '<div class="source-info">출처: Embeddings</div>';
-                            }
-                            if (metadata.predicate) {
-                                metadataInfo += `<div class="predicate-info">관계: ${metadata.predicate}</div>`;
-                            }
-                            if (metadata.description) {
-                                metadataInfo += `<div class="description-info">${truncateText(metadata.description, 100)}</div>`;
-                            }
-                        } catch (e) {
-                            // JSON 파싱 실패 시 무시
-                        }
+                    if (relation.similarity) {
+                        metadataInfo += `<div class="similarity-score">유사도: ${(relation.similarity * 100).toFixed(1)}%</div>`;
                     }
+                    if (relation.source === 'nlk') {
+                        metadataInfo += '<div class="source-info">출처: NLSH</div>';
+                    }
+                    if (relation.source === 'embeddings') {
+                        metadataInfo += '<div class="source-info">출처: Embeddings</div>';
+                    }
+                    if (relation.predicate) {
+                        metadataInfo += `<div class="predicate-info">관계: ${relation.predicate}</div>`;
+                    }
+                    if (relation.description) {
+                        metadataInfo += `<div class="description-info">${truncateText(relation.description, 100)}</div>`;
+                    }
+
 
                     return `
                                             <div class="relation-card ${relation.relation_type}" onclick="window.subjectSearchModule.loadSubjectDetailPage('${relation.target_id}')" title="클릭하여 상세보기">

@@ -41,7 +41,7 @@ export class ApiClient {
         return this.makeRequest(url);
     }
     // 주제어와 관련된 도서 조회
-    async getSubjectRelatedBooks(nodeId, limit = 10) {
+    async getSubjectRelatedBooks(nodeId, limit = 1000) {
         try {
             const response = await fetch(`${this.baseUrl}/books/subject-related-books?node_id=${encodeURIComponent(nodeId)}&limit=${limit}`);
             
