@@ -142,12 +142,13 @@ class NetworkModelCache:
         
         return dict(self._graph.nodes[node_id])
     
-    def get_node_neighbors(self, node_id: str, relation_type: Optional[str] = None) -> Optional[Dict[str, List[Dict[str, Any]]]]:
+    def get_node_neighbors(self, node_id: str, limit: int, relation_type: Optional[str] = None) -> Optional[Dict[str, List[Dict[str, Any]]]]:
         """
         특정 노드의 이웃 노드들과 연결 정보 반환
         
         Args:
             node_id: 노드 ID
+            limit: 이웃 노드 수 제한
             relation_type: 특정 관계 타입만 필터링 (선택사항)
             
         Returns:
@@ -161,7 +162,14 @@ class NetworkModelCache:
         
         nodes = []
         edges = []
+        
+
+        limit_count = 0
+
         for neighbor_id in self._graph.neighbors(node_id):
+            if limit_count >= limit:
+                break
+
             node_data = dict(self._graph.nodes[neighbor_id])
             node_data['node_id'] = neighbor_id
             nodes.append(node_data)
@@ -177,6 +185,8 @@ class NetworkModelCache:
                     'target_id': neighbor_id,
                     **edge_data
                 })
+            
+            limit_count += 1
         
         return nodes, edges
     

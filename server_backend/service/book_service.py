@@ -265,7 +265,7 @@ class BookService:
                 
                 query = """
                 SELECT isbn, title, kdc, publication_year, intro, toc, nlk_subjects FROM books 
-                WHERE isbn IN ({}) LIMIT ?
+                WHERE isbn IN ({}) ORDER BY publication_year DESC LIMIT ?
                 """.format(','.join('?' for _ in retrieved_isbns))
 
                 await cursor.execute(query, (*retrieved_isbns, limit))

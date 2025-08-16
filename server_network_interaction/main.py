@@ -133,11 +133,12 @@ async def get_nodes_info(
 @app.get("/node/neighbors", response_model=NeighborsResponse)
 async def get_node_neighbors(
     node_id: str,
+    limit: Optional[int] = 500,
     relation_type: Optional[str] = None,
     cache: NetworkModelCache = Depends(get_cache)
 ):
     """특정 노드의 이웃 노드들 조회"""
-    nodes, edges = cache.get_node_neighbors(node_id, relation_type)
+    nodes, edges = cache.get_node_neighbors(node_id, limit, relation_type)
     return NeighborsResponse(node_id=node_id, nodes=nodes, edges=edges)
 
 

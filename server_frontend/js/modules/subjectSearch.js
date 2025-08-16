@@ -505,6 +505,12 @@ export class SubjectSearchModule {
                             if (metadata.source === 'cosine') {
                                 metadataInfo += '<div class="source-info">출처: Embeddings</div>';
                             }
+                            if (metadata.predicate) {
+                                metadataInfo += `<div class="predicate-info">관계: ${metadata.predicate}</div>`;
+                            }
+                            if (metadata.description) {
+                                metadataInfo += `<div class="description-info">${truncateText(metadata.description, 100)}</div>`;
+                            }
                         } catch (e) {
                             // JSON 파싱 실패 시 무시
                         }

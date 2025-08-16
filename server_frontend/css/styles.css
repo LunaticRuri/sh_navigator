@@ -2265,6 +2265,12 @@ body {
     font-weight: 600;
     margin-bottom: var(--spacing-xs);
 }
+.relation-card .predicate-info {
+    font-size: var(--font-size-sm);
+    color: var(--primary-color);
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+}
 
 .relation-card .source-info {
     font-size: var(--font-size-xs);

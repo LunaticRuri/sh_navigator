@@ -210,5 +210,5 @@ def set_candidates_from_text(text: str):
 if __name__ == "__main__":
     create_relation_bot_database()
     # set_top_n_related_candidates(1000)
-    set_top_n_candidates(1000)
+    # set_top_n_candidates(1000)
     print("Relation bot database initialized and candidates set.")

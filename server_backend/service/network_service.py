@@ -64,7 +64,7 @@ class NetworkService:
             # Get neighbors from the network interaction server
             response = await self.http_client.get(
                 f"{NETWORK_SERVER_URL}/node/neighbors",
-                params={"node_id": node_id}
+                params={"node_id": node_id, "limit": limit}
             )
 
             response.raise_for_status()
@@ -94,8 +94,6 @@ class NetworkService:
                     metadata={k: v for k, v in edge.items() if k not in ("source_id", "target_id", "relation_type")}
                 )
                 edges.append(edge_data)
-            
-            edges = edges[:limit]  # Limit the number of edges
 
             return NetworkResponse(
                 nodes=nodes,

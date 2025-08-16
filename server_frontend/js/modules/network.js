@@ -439,9 +439,13 @@ export class NetworkModule {
                 if (metadata.similarity) {
                     content += `<br><strong>유사도:</strong> ${(metadata.similarity * 100).toFixed(2)}%`;
                 }
+                if (metadata.predicate) {
+                    content += `<br><strong>관계:</strong> ${metadata.predicate}`;
+                }
                 if (metadata.description) {
                     content += `<br><strong>설명:</strong> ${metadata.description}`;
-                }
+                } 
+
             } catch (e) {
                 // JSON 파싱 실패 시 무시
             }
