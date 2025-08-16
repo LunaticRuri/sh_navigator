@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -131,6 +132,14 @@ def create_app() -> FastAPI:
     
     # Mount static files for frontend
     app.mount("/", StaticFiles(directory="../server_frontend", html=True), name="static")
+
+    # "/about" 경로에 대한 또 다른 HTML 파일 연결
+    @app.get("/introduction", response_class=HTMLResponse)
+    async def introduction():
+        with open("../server_frontend/introduction.html", "r", encoding="utf-8") as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content, status_code=200)
+
 
     return app
 
