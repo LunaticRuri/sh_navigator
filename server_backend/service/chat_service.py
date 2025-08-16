@@ -18,12 +18,16 @@ class ChatService:
     """Service class for chatbot operations."""
 
     def __init__(self):
-        """Initialize the chat service with Gemini API."""
+        """
+        Initialize the chat service with Gemini API.
+        Sets up the generative model if API key is available.
+        """
         self.model = None
         self.is_available = False
         
         if GEMINI_API_KEY:
             try:
+                # Configure Gemini API with provided key
                 genai.configure(api_key=GEMINI_API_KEY)
                 self.model = genai.GenerativeModel(GEMINI_MODEL)
                 self.is_available = True
@@ -46,21 +50,22 @@ class ChatService:
             ChatResponse with bot's reply
         """
         if not self.is_available:
+            # Service unavailable if API key is missing
             raise HTTPException(
                 status_code=503, 
                 detail="챗봇 서비스를 사용할 수 없습니다. API 키가 설정되지 않았습니다."
             )
         try:
-            # Get or create session
+            # Get or create session for the user
             session_id = chat_session_manager.get_or_create_session(chat_message.session_id)
             
-            # Get conversation history
+            # Retrieve conversation history for the session
             history = chat_session_manager.get_session_history(session_id)
 
-            # Generate response
+            # Generate response using Gemini API
             response_text = await self._generate_response(chat_message.content, history)
             
-            # Save messages to session
+            # Save user and assistant messages to session history
             chat_session_manager.add_message_to_session(session_id, 'user', chat_message.content)
             chat_session_manager.add_message_to_session(session_id, 'assistant', response_text)
             
@@ -70,6 +75,7 @@ class ChatService:
             logger.error(f"Chat response generation error: {e}")
             session_id = chat_session_manager.get_or_create_session(chat_message.session_id)
             
+            # Return error response if generation fails
             return ChatResponse(
                 response="죄송합니다. 현재 응답을 생성할 수 없습니다. 잠시 후 다시 시도해주세요.",
                 session_id=session_id,
@@ -88,10 +94,10 @@ class ChatService:
             Generated response text
         """
         try:
-            # Format history for Gemini API
+            # Format history for Gemini API input
             chat_history = format_gemini_chat_history(history)
             
-            # Add system prompt for new conversations
+            # If no history, start with system prompt and greeting
             if not chat_history:
                 system_prompt = get_system_prompt()
                 chat_history = [
@@ -105,13 +111,12 @@ class ChatService:
                     }
                 ]
             
-            # Generate response
+            # Generate response using chat session if history exists
             if chat_history:
-                # Use chat session for existing conversation
                 chat = self.model.start_chat(history=chat_history)
                 response = await asyncio.to_thread(chat.send_message, message)
             else:
-                # Generate response for new conversation
+                # For new conversation, use a full prompt
                 full_prompt = f"""당신은 도서관과 주제명표목에 대한 전문 지식을 가진 AI 어시스턴트입니다. 
 다음 역할을 수행합니다:
 
@@ -163,6 +168,7 @@ class ChatService:
         """
         history = chat_session_manager.get_session_history(session_id)
         
+        # Only include user and assistant messages in the output
         return {
             "session_id": session_id,
             "messages": [msg for msg in history if msg['role'] in ['user', 'assistant']],
@@ -206,5 +212,8 @@ chat_service = ChatService()
 
 @lru_cache()
 def get_chat_service() -> ChatService:
-    """FastAPI 의존성으로 사용할 chat service 인스턴스 반환"""
-    return chat_service  # 기존 전역 인스턴스 사용
+    """
+    FastAPI dependency for providing the chat service instance.
+    Returns the global chat_service instance.
+    """
+    return chat_service  # Use the global instance

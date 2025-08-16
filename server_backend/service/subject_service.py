@@ -2,7 +2,7 @@ from functools import lru_cache
 import logging
 import time
 import httpx
-from typing import List, Dict, Any
+from typing import List, Dict
 from fastapi import HTTPException
 from database.database_manager import DatabaseManager
 from core.kdc_cache import get_kdc_cache
@@ -13,9 +13,7 @@ from core.utils import (
     truncate_string, 
     calculate_pagination, 
     sort_relations_by_priority,
-    limit_relations,
-    log_search_query,
-    safe_json_parse
+    log_search_query
 )
 from core.config import (
     MAX_QUERY_LENGTH,
@@ -25,17 +23,15 @@ from core.config import (
 
 logger = logging.getLogger(__name__)
 
-
 class SubjectService:
     """Service class for subject-related operations."""
 
     def __init__(self, database_manager: DatabaseManager):
         """
         Initialize the subject service.
-        
+
         Args:
-            embedding_model: SentenceTransformer model for embeddings
-            db_connection_manager: Database connection manager function
+            database_manager: DatabaseManager instance for DB operations
         """
         self.http_client = httpx.AsyncClient(timeout=10.0)
         self.database_manager = database_manager
@@ -49,12 +45,12 @@ class SubjectService:
     ) -> SearchResponse:
         """
         Search subjects using full-text search.
-        
+
         Args:
             query: Search query
             page: Page number
             per_page: Results per page
-            
+
         Returns:
             SearchResponse with subject results
         """
@@ -62,7 +58,7 @@ class SubjectService:
             if not query:
                 raise HTTPException(status_code=400, detail="검색어를 제공해야 합니다.")
             
-            # Sanitize query
+            # Sanitize query for safe DB search
             query = sanitize_query(query)
 
             async with self.database_manager.get_connection() as conn:
@@ -73,27 +69,27 @@ class SubjectService:
                 count_query = "SELECT COUNT(*) FROM subjects_fts WHERE label MATCH ?"
                 params = [query]
                 
-                # Get total count
+                # Get total count of matching subjects
                 await cursor.execute(count_query, params)
                 result = await cursor.fetchone()
                 total_count = result[0]
                 
-                # Calculate pagination
+                # Calculate pagination info
                 pagination = calculate_pagination(total_count, page, per_page)
                 
-                # Get results with pagination
+                # Get paginated results
                 final_query = f"{base_query} ORDER BY RANK LIMIT ? OFFSET ?"
                 await cursor.execute(final_query, params + [per_page, pagination["offset"]])
                 result_node_ids = await cursor.fetchall()
                 
-                # Get detailed subject information
+                # Get detailed subject information for found node_ids
                 if result_node_ids:
                     node_id_list = [row['node_id'] for row in result_node_ids]
                     subjects_data = await self._get_subjects_by_node_ids(cursor, node_id_list)
                 else:
                     subjects_data = []
                 
-                # Convert to response models
+                # Convert DB rows to response models
                 subjects = [self._row_to_subject_response(row) for row in subjects_data]
                 
                 # Log search for analytics
@@ -116,10 +112,10 @@ class SubjectService:
     async def get_subject_by_node_id(self, node_id: str) -> SubjectResponse:
         """
         Get a specific subject by node ID with its relations.
-        
+
         Args:
             node_id: Subject node ID
-            
+
         Returns:
             SubjectResponse with subject details and relations
         """
@@ -127,38 +123,39 @@ class SubjectService:
             async with self.database_manager.get_connection() as conn:
                 cursor = await conn.cursor()
                 
-                # Get subject details
+                # Get subject details from DB
                 await cursor.execute("SELECT * FROM subjects WHERE node_id = ?", (node_id,))
                 subject_data = await cursor.fetchone()
                 
                 if not subject_data:
                     raise HTTPException(status_code=404, detail="주제를 찾을 수 없습니다.")
                 
-            # Get relations
+            # Get relations from network server
             response = await self.http_client.get(
                 f"{NETWORK_SERVER_URL}/node/neighbors",
                 params={"node_id": node_id}
-                )
+            )
             response.raise_for_status()
             neighbors_data = response.json()
 
             relations = []
 
+            # Build relations list from neighbors and edges
             for neighbor in neighbors_data.get('nodes', []):
                 for relation in neighbors_data.get('edges', []):
                     if relation['target_id'] == neighbor['node_id']:
-                        relation_dict ={
+                        relation_dict = {
                             "source_id": relation["source_id"],
                             "target_id": relation["target_id"],
                             "target_label": neighbor["label"],
                             "relation_type": relation["relation_type"]
                         }
-                        
-                        if relation["relation_type"] == "cosine_related" or relation["relation_type"] == "generated":
+                        # Mark relation source
+                        if relation["relation_type"] in ("cosine_related", "generated"):
                             relation_dict['source'] = 'embeddings'
                         else:
                             relation_dict['source'] = 'nlk'
-                        
+                        # Add optional fields
                         if 'similarity' in relation:
                             relation_dict['similarity'] = relation['similarity']
                         if 'predicate' in relation:
@@ -168,7 +165,7 @@ class SubjectService:
 
                         relations.append(relation_dict)
             
-            # Sort relations by relation type
+            # Sort relations by priority
             relations = sort_relations_by_priority(relations)
 
             return SubjectResponse(
@@ -193,21 +190,21 @@ class SubjectService:
     ) -> SearchResponse:
         """
         Search subjects using vector similarity.
-        
+
         Args:
             query: Search query for vector search
             limit: Maximum number of results from FAISS
             page: Page number
             per_page: Results per page
-            
+
         Returns:
             SearchResponse with subject results
         """
         try:
-            # Validate and truncate query
+            # Validate and truncate query for embedding
             query = truncate_string(query, MAX_QUERY_LENGTH)
             
-            # Generate query embedding
+            # Generate query embedding and search via model server
             time_start = time.time()
             response = await self.http_client.post(
                 f"{MODEL_SERVER_URL}/search/subjects",
@@ -218,7 +215,7 @@ class SubjectService:
             retrieved_node_ids = search_data.get("retrieved_node_ids", [])
             logger.info(f"Query embedding and FAISS search completed in {time.time() - time_start:.2f} seconds")
             
-            # Check if results exist
+            # If no results, return empty response
             if not retrieved_node_ids:
                 return SearchResponse(
                     results=[],
@@ -228,11 +225,11 @@ class SubjectService:
                     total_pages=0
                 )
             
-            # Get subject details from database
+            # Get subject details from DB for found node_ids
             async with self.database_manager.get_connection() as conn:
                 cursor = await conn.cursor()
                 
-                # Calculate pagination
+                # Calculate pagination info
                 total_count = min(len(retrieved_node_ids), limit)
                 pagination = calculate_pagination(total_count, page, per_page)
                 
@@ -259,7 +256,7 @@ class SubjectService:
                     key=lambda x: retrieved_node_ids.index(x[0])
                 )
 
-                # Convert to response models
+                # Convert DB rows to response models
                 subjects = [self._row_to_subject_response(row) for row in subjects_data]
                 
                 # Log search for analytics
@@ -282,13 +279,13 @@ class SubjectService:
     async def get_kdc_access_points(self, node_id: str) -> KDCAccessPointListResponse:
         """
         Get KDC access points for a specific node.
-        
+
         Args:
             node_id: Subject node ID
+
         Returns:
             KDCAccessPointListResponse with KDC access points and associated books
         """
-        
         try:
             # Validate node_id
             if not node_id:
@@ -300,16 +297,19 @@ class SubjectService:
                 
                 retrieved_isbns = await book_cursor.fetchall()
                 if not retrieved_isbns:
-                    
-                    async with self.database_manager.get_connection() as subject_conn:
-                        subject_cursor = await subject_conn.cursor()
-                        neighbors_dict = await self._get_node_neighbors(subject_cursor, node_id, 10)
-                    
-                    logger.info(f"Retrieved neighbors for node {node_id}: {neighbors_dict}")
+                    # If no direct books found, try to get neighbors
+                    response = await self.http_client.get(
+                        f"{NETWORK_SERVER_URL}/node/neighbors",
+                        params={"node_id": node_id, "limit": 10}
+                    )
+                    response.raise_for_status()
+                    neighbors_data = response.json()
+
+                    logger.info(f"Retrieved neighbors for node {node_id}: {len(neighbors_data.get('nodes', []))} neighbors")
                     
                     retrieved_isbns_indirect = []
-                    for neighbor in neighbors_dict:
-                        neighbor_node_id = neighbor["neighbor_id"]
+                    for neighbor in neighbors_data.get('nodes', []):
+                        neighbor_node_id = neighbor["node_id"]
                         await book_cursor.execute(book_subject_index_query, (neighbor_node_id,))
                         neighbor_isbns = await book_cursor.fetchall()
                         if not neighbor_isbns:
@@ -317,6 +317,7 @@ class SubjectService:
                         retrieved_isbns_indirect.extend(neighbor_isbns)
                     
                     if not retrieved_isbns_indirect:
+                        # No books found for neighbors either
                         return KDCAccessPointListResponse(
                             access_points=[],
                             total_count=0
@@ -328,10 +329,10 @@ class SubjectService:
                 else:
                     is_direct = True
                         
-
                 # Flatten the list of tuples to a list of ISBNs
                 retrieved_isbns = [row[0] for row in retrieved_isbns]
                 
+                # Query books by ISBNs
                 book_subject_index_query = """
                 SELECT isbn, title, kdc, publication_year, intro, toc, nlk_subjects FROM books 
                 WHERE isbn IN ({}) LIMIT 100
@@ -341,19 +342,20 @@ class SubjectService:
 
                 books_data = await book_cursor.fetchall()
 
+                # Convert DB rows to BookResponse models
                 books = []
                 for row in books_data:
                     books.append(
                         BookResponse(
-                        isbn=row["isbn"],
-                        title=row["title"],
-                        kdc=row["kdc"],
-                        publication_year=row["publication_year"],
-                        intro=row["intro"],
-                        toc=row["toc"],
-                        nlk_subjects=row["nlk_subjects"]
+                            isbn=row["isbn"],
+                            title=row["title"],
+                            kdc=row["kdc"],
+                            publication_year=row["publication_year"],
+                            intro=row["intro"],
+                            toc=row["toc"],
+                            nlk_subjects=row["nlk_subjects"]
+                        )
                     )
-                )
                 
                 log_search_query("subject_related_books", book_subject_index_query, len(books))
 
@@ -370,17 +372,17 @@ class SubjectService:
                         continue
                     kdc_access_points.append(
                         KDCAccessPointResponse(
-                            kdc= kdc_code,
-                            label= self.kdc_cache.get_kdc_name(kdc_code),
-                            is_direct= True if is_direct else False,
-                            books= BookListResponse(
+                            kdc=kdc_code,
+                            label=self.kdc_cache.get_kdc_name(kdc_code),
+                            is_direct=True if is_direct else False,
+                            books=BookListResponse(
                                 books=group_books,
                                 total_count=len(group_books)
                             )
                         )
                     )
 
-                # Sort by KDC code
+                # Sort access points by KDC code
                 kdc_access_points.sort(key=lambda x: x.kdc)
 
                 return KDCAccessPointListResponse(
@@ -397,11 +399,11 @@ class SubjectService:
     async def _get_subjects_by_node_ids(self, cursor, node_id_list: List[str]) -> List[Dict]:
         """
         Get subject details by list of node IDs.
-        
+
         Args:
             cursor: Database cursor
             node_id_list: List of node IDs
-            
+
         Returns:
             List of subject data dictionaries
         """
@@ -414,57 +416,14 @@ class SubjectService:
         await cursor.execute(query, node_id_list)
         return await cursor.fetchall()
 
-    async def _get_node_neighbors(self, cursor, node_id: str, limit: int) -> List[Dict]:
-        """
-        Get neighbor nodes for network visualization and kdc access points.
-        
-        Args:
-            cursor: Database cursor
-            node_id: Central node ID
-            limit: Maximum number of neighbors
-            
-        Returns:
-            List of neighbor dictionaries
-        """
-        await cursor.execute("""
-            SELECT DISTINCT
-                CASE 
-                    WHEN r.source_id = ? THEN r.target_id
-                    ELSE r.source_id
-                END as neighbor_id,
-                s.label,
-                s.definition,
-                r.relation_type,
-                r.metadata
-            FROM relations r
-            JOIN subjects s ON (
-                (r.source_id = ? AND s.node_id = r.target_id) OR
-                (r.target_id = ? AND s.node_id = r.source_id)
-            )
-            WHERE r.source_id = ? OR r.target_id = ?
-            ORDER BY 
-                CASE 
-                    WHEN r.relation_type != 'cosine_related' THEN 0 
-                    ELSE 1 
-                END,
-                CASE 
-                    WHEN r.relation_type = 'cosine_related' THEN 
-                        CAST(json_extract(r.metadata, '$.similarity') AS REAL)
-                    ELSE 0
-                END DESC
-            LIMIT ?
-        """, (node_id, node_id, node_id, node_id, node_id, limit))
-        
-        return await cursor.fetchall()
-
     def _row_to_subject_response(self, row, include_relations: bool = False) -> SubjectResponse:
         """
         Convert database row to SubjectResponse model.
-        
+
         Args:
             row: Database row
             include_relations: Whether to include relations
-            
+
         Returns:
             SubjectResponse model
         """
@@ -479,13 +438,26 @@ class SubjectService:
 _subject_service_instance = None
 
 def set_subject_service(database_manager: DatabaseManager):
-    """전역 subject service 인스턴스 설정"""
+    """
+    Set the global subject service instance.
+
+    Args:
+        database_manager: DatabaseManager instance
+    """
     global _subject_service_instance
     _subject_service_instance = SubjectService(database_manager)
 
 @lru_cache()
 def get_subject_service() -> SubjectService:
-    """FastAPI 의존성으로 사용할 subject service 인스턴스 반환"""
+    """
+    Return the global subject service instance for FastAPI dependency injection.
+
+    Returns:
+        SubjectService instance
+
+    Raises:
+        RuntimeError: If the service is not initialized
+    """
     if _subject_service_instance is None:
         raise RuntimeError("Subject service not initialized")
     return _subject_service_instance

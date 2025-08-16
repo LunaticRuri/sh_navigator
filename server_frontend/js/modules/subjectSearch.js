@@ -1,21 +1,32 @@
 import { ApiClient } from '../core/api.js';
 import { showLoading, clearResults, showError, truncateText, getRelationTypeKorean } from '../core/utils.js';
 
+/**
+ * 주제 검색 모듈
+ * - 일반/벡터 주제 검색
+ * - 결과/페이지네이션/상세정보/상세페이지 렌더링
+ */
 export class SubjectSearchModule {
     constructor() {
         this.apiClient = new ApiClient();
-        this.currentSearch = null;
-        this.currentPage = 1;
-        this.totalPages = 1;
+        this.currentSearch = null; // 현재 검색 정보
+        this.currentPage = 1;      // 현재 페이지
+        this.totalPages = 1;       // 전체 페이지 수
         this.init();
     }
 
+    /**
+     * 모듈 초기화
+     */
     init() {
         this.bindEvents();
     }
 
+    /**
+     * 이벤트 바인딩
+     * - 검색 입력 필드 엔터키 지원
+     */
     bindEvents() {
-        // 주제 검색 필드들에 엔터 키 지원
         ['general-subject-query', 'vector-subject-query'].forEach(id => {
             const element = document.getElementById(id);
             if (element) {
@@ -32,7 +43,9 @@ export class SubjectSearchModule {
         });
     }
 
-    // 일반 주제 검색
+    /**
+     * 일반 주제 검색 실행
+     */
     async performGeneralSearch() {
         const query = document.getElementById('general-subject-query').value.trim();
         if (!query) {
@@ -45,7 +58,9 @@ export class SubjectSearchModule {
         await this.searchSubjects();
     }
 
-    // 벡터 주제 검색
+    /**
+     * 벡터 주제 검색 실행
+     */
     async performVectorSearch() {
         const query = document.getElementById('vector-subject-query').value.trim();
         const limit = document.getElementById('vector-subject-limit').value;
@@ -60,7 +75,9 @@ export class SubjectSearchModule {
         await this.searchSubjects();
     }
 
-    // 주제 검색 실행
+    /**
+     * 주제 검색 API 호출 및 결과 처리
+     */
     async searchSubjects() {
         if (!this.currentSearch) return;
 
@@ -85,7 +102,10 @@ export class SubjectSearchModule {
         showLoading(false, 'subject');
     }
 
-    // 검색 결과 표시
+    /**
+     * 검색 결과 렌더링
+     * @param {Object} data - 검색 결과 데이터
+     */
     displayResults(data) {
         const container = document.getElementById('results-subject-container');
         const searchInfo = document.getElementById('search-subject-info');
@@ -100,7 +120,7 @@ export class SubjectSearchModule {
             `;
         }
 
-        // 결과가 없는 경우
+        // 결과 없음 처리
         if (data.results.length === 0) {
             container.innerHTML = `
                 <div style="text-align: center; padding: 40px; color: #666;">
@@ -111,7 +131,7 @@ export class SubjectSearchModule {
             return;
         }
 
-        // 주제 목록 표시
+        // 주제 목록 렌더링
         container.innerHTML = data.results.map(subject => `
             <div class="subject-item" onclick="window.subjectSearchModule.showSubjectDetails('${subject.node_id}')">
                 <div class="subject-title">${subject.label || '주제명 없음'}</div>
@@ -125,7 +145,10 @@ export class SubjectSearchModule {
         this.totalPages = data.total_pages;
     }
 
-    // 페이지네이션 업데이트
+    /**
+     * 페이지네이션 렌더링
+     * @param {Object} data - 검색 결과 데이터
+     */
     updatePagination(data) {
         const pagination = document.getElementById('pagination-subject');
         const totalPages = data.total_pages;
@@ -181,14 +204,20 @@ export class SubjectSearchModule {
         pagination.innerHTML = paginationHTML;
     }
 
-    // 페이지 이동
+    /**
+     * 페이지 이동
+     * @param {number} page - 이동할 페이지 번호
+     */
     async goToPage(page) {
         if (page < 1 || page > this.totalPages) return;
         this.currentPage = page;
         await this.searchSubjects();
     }
 
-    // 주제 상세 정보 표시
+    /**
+     * 주제 상세 정보 모달 표시
+     * @param {string} nodeId - 주제 ID
+     */
     async showSubjectDetails(nodeId) {
         const result = await this.apiClient.getSubjectDetails(nodeId);
 
@@ -197,7 +226,7 @@ export class SubjectSearchModule {
             const modal = document.getElementById('subject-modal');
             const details = document.getElementById('subject-details');
 
-            // 관련 도서 정보 가져오기
+            // 관련 도서 정보 렌더링
             let relatedBooksHTML = '';
             try {
                 const booksResult = await this.apiClient.getSubjectRelatedBooks(nodeId, 10);
@@ -223,6 +252,7 @@ export class SubjectSearchModule {
                 console.warn('관련 도서 정보를 가져오는데 실패했습니다:', error);
             }
 
+            // 상세 정보 모달 내용 렌더링
             details.innerHTML = `
                 <h2 class="subject-detail-title">${subject.label || '주제명 없음'}</h2>
                 
@@ -301,40 +331,48 @@ export class SubjectSearchModule {
         }
     }
 
-    // 주제 상세 페이지로 이동
+    /**
+     * 주제 상세 페이지로 이동
+     * @param {string} nodeId - 주제 ID
+     */
     async goToSubjectDetailPage(nodeId) {
         // 모달 닫기
         document.getElementById('subject-modal').style.display = 'none';
         document.getElementById('subject-explore-modal').style.display = 'none';
         document.getElementById('book-modal').style.display = 'none';
 
-        // 현재 메뉴 상태 저장 (돌아가기 기능을 위해)
+        // 이전 메뉴 상태 저장 (돌아가기 기능)
         this.previousMenu = 'subject';
 
-        // 주제 상세 페이지로 전환
+        // 상세 페이지로 전환
         this.switchToSubjectDetailPage();
 
         // 상세 정보 로드
         await this.loadSubjectDetailPage(nodeId);
     }
 
-    // 주제 상세 페이지로 전환
+    /**
+     * 주제 상세 페이지로 전환 (섹션/메뉴 상태 변경)
+     */
     switchToSubjectDetailPage() {
         // 모든 섹션 숨기기
         document.querySelectorAll('.content-section').forEach(section => {
             section.classList.remove('active');
         });
 
-        // 주제 상세 페이지 표시
+        // 상세 페이지 표시
         document.getElementById('subject-detail-page').classList.add('active');
 
-        // 사이드바 메뉴 상태 업데이트 (선택적)
+        // 사이드바 메뉴 상태 업데이트
         document.querySelectorAll('.menu-item').forEach(item => {
             item.classList.remove('active');
         });
     }
 
-    // 주제 상세 페이지 로드
+    /**
+     * 주제 상세 페이지 내용 로드 및 렌더링
+     * @param {string} nodeId - 주제 ID
+     */
     async loadSubjectDetailPage(nodeId) {
         const content = document.getElementById('subject-detail-content');
         const title = document.getElementById('subject-detail-page-title');
@@ -356,7 +394,7 @@ export class SubjectSearchModule {
                 // 페이지 제목 업데이트
                 title.textContent = subject.label || '주제 상세 정보';
 
-                // KDC 접근점 정보 가져오기
+                // KDC 접근점 정보 렌더링
                 let kdcAccessPointsHTML = '';
                 try {
                     const kdcResult = await this.apiClient.getKdcAccessPoints(nodeId);
@@ -411,7 +449,7 @@ export class SubjectSearchModule {
                     console.warn('KDC 접근점 정보를 가져오는데 실패했습니다:', error);
                 }
 
-                // 관련 도서 정보 가져오기
+                // 관련 도서 정보 렌더링
                 let relatedBooksHTML = '';
                 try {
                     const booksResult = await this.apiClient.getSubjectRelatedBooks(nodeId);
@@ -475,43 +513,71 @@ export class SubjectSearchModule {
 
                         ${subject.relations && subject.relations.length > 0 ? `
                             <div class="detail-section">
-                                <h2>관련 주제들 (${subject.relations.length}개)</h2>
+                                <h2>관련 주제 관계들 (${subject.relations.length}개)</h2>
                                 <div class="relations-grid">
-                                    ${subject.relations.map(relation => {
-                    const relationTypeKorean = getRelationTypeKorean(relation.relation_type);
+                                    ${(() => {
+                    // 같은 target_id를 가진 관계들을 그룹화
+                    const groupedRelations = subject.relations.reduce((groups, relation) => {
+                        const key = relation.target_id;
+                        if (!groups[key]) {
+                            groups[key] = [];
+                        }
+                        groups[key].push(relation);
+                        return groups;
+                    }, {});
 
-                    let metadataInfo = '';
+                    return Object.entries(groupedRelations).map(([targetId, relations]) => {
+                        // 첫 번째 관계에서 기본 정보 가져오기
+                        const primaryRelation = relations[0];
+                        
+                        // 모든 관계 타입 배지 생성
+                        const relationTypeBadges = relations.map(relation => {
+                            const relationTypeKorean = getRelationTypeKorean(relation.relation_type);
+                            return `<span class="relation-type-badge ${relation.relation_type}">${relationTypeKorean}</span>`;
+                        }).join(' ');
 
-                    if (relation.similarity) {
-                        metadataInfo += `<div class="similarity-score">유사도: ${(relation.similarity * 100).toFixed(1)}%</div>`;
-                    }
-                    if (relation.source === 'nlk') {
-                        metadataInfo += '<div class="source-info">출처: NLSH</div>';
-                    }
-                    if (relation.source === 'embeddings') {
-                        metadataInfo += '<div class="source-info">출처: Embeddings</div>';
-                    }
-                    if (relation.predicate) {
-                        metadataInfo += `<div class="predicate-info">관계: ${relation.predicate}</div>`;
-                    }
-                    if (relation.description) {
-                        metadataInfo += `<div class="description-info">${truncateText(relation.description, 100)}</div>`;
-                    }
+                        // 메타데이터 정보 통합 (중복 제거)
+                        let metadataInfo = '';
+                        const similarities = relations.filter(r => r.similarity).map(r => r.similarity);
+                        const sources = [...new Set(relations.filter(r => r.source).map(r => r.source))];
+                        const predicates = [...new Set(relations.filter(r => r.predicate).map(r => r.predicate))];
+                        const descriptions = [...new Set(relations.filter(r => r.description).map(r => r.description))];
 
+                        if (similarities.length > 0) {
+                            const avgSimilarity = similarities.reduce((sum, sim) => sum + sim, 0) / similarities.length;
+                            metadataInfo += `<div class="similarity-score">유사도: ${(avgSimilarity * 100).toFixed(1)}%</div>`;
+                        }
+                        
+                        sources.forEach(source => {
+                            if (source === 'nlk') {
+                                metadataInfo += '<div class="source-info">출처: NLSH</div>';
+                            } else if (source === 'embeddings') {
+                                metadataInfo += '<div class="source-info">출처: Embeddings</div>';
+                            }
+                        });
+                        
+                        if (predicates.length > 0) {
+                            metadataInfo += `<div class="predicate-info">관계: ${predicates.join(', ')}</div>`;
+                        }
+                        
+                        if (descriptions.length > 0) {
+                            metadataInfo += `<div class="description-info">${descriptions.map(desc => truncateText(desc, 100)).join('; ')}</div>`;
+                        }
 
-                    return `
-                                            <div class="relation-card ${relation.relation_type}" onclick="window.subjectSearchModule.loadSubjectDetailPage('${relation.target_id}')" title="클릭하여 상세보기">
-                                                <div class="relation-header">
-                                                    <span class="relation-type-badge ${relation.relation_type}">${relationTypeKorean}</span>
-                                                </div>
-                                                <div class="relation-content">
-                                                    <h4 class="relation-target">${relation.target_label}</h4>
-                                                    ${relation.target_id ? `<div class="relation-id">ID: ${relation.target_id}</div>` : ''}
-                                                    ${metadataInfo}
-                                                </div>
-                                            </div>
-                                        `;
-                }).join('')}
+                        return `
+                            <div class="relation-card" onclick="window.subjectSearchModule.loadSubjectDetailPage('${primaryRelation.target_id}')" title="클릭하여 상세보기">
+                                <div class="relation-header">
+                                    ${relationTypeBadges}
+                                </div>
+                                <div class="relation-content">
+                                    <h4 class="relation-target">${primaryRelation.target_label}</h4>
+                                    ${primaryRelation.target_id ? `<div class="relation-id">ID: ${primaryRelation.target_id}</div>` : ''}
+                                    ${metadataInfo}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                })()}
                                 </div>
                             </div>
                         ` : ''}
@@ -523,7 +589,7 @@ export class SubjectSearchModule {
         } catch (error) {
             content.innerHTML = `
                 <div class="error-container">
-                    <h2>❌ 오류가 발생했습니다</h2>
+                    <h2>오류가 발생했습니다</h2>
                     <p>${error.message}</p>
                     <button onclick="window.subjectSearchModule.goBackFromSubjectDetail()" class="back-button">
                         돌아가기
@@ -533,9 +599,11 @@ export class SubjectSearchModule {
         }
     }
 
-    // 주제 상세 페이지에서 돌아가기
+    /**
+     * 주제 상세 페이지에서 돌아가기
+     */
     goBackFromSubjectDetail() {
-        // 주제 상세 페이지 숨기기
+        // 상세 페이지 숨기기
         document.getElementById('subject-detail-page').classList.remove('active');
 
         // 이전 메뉴로 돌아가기 (기본값: 주제 검색)
@@ -560,7 +628,9 @@ export class SubjectSearchModule {
         }
     }
 
-    // 탭 전환 시 검색 결과 초기화
+    /**
+     * 탭 전환 시 검색 결과 초기화
+     */
     clearSearchResults() {
         clearResults('subject');
         this.currentSearch = null;

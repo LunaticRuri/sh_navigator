@@ -23,8 +23,7 @@ class BookService:
         Initialize the book service.
         
         Args:
-            embedding_model: SentenceTransformer model for embeddings
-            db_connection_manager: Database connection manager function
+            database_manager: DatabaseManager instance for DB operations
         """
         self.http_client = httpx.AsyncClient(timeout=10.0)
         self.database_manager = database_manager
@@ -55,7 +54,7 @@ class BookService:
             if not any([query, title, isbn]):
                 raise HTTPException(status_code=400, detail="검색어 또는 제목을 제공해야 합니다.")
             
-            # Sanitize query
+            # Sanitize query and title
             if query:
                 query = sanitize_query(query)
             if title:
@@ -64,30 +63,30 @@ class BookService:
             async with self.database_manager.get_connection() as conn:
                 cursor = await conn.cursor()
                 
-                # Build search query
+                # Build SQL search query and parameters
                 base_query, count_query, params = self._build_search_query(query, title, isbn)
                 
-                # Get total count
+                # Get total count of matching books
                 await cursor.execute(count_query, params)
                 result = await cursor.fetchone()
                 total_count = result[0]
                 
-                # Calculate pagination
+                # Calculate pagination info
                 pagination = calculate_pagination(total_count, page, per_page)
                 
-                # Get results with pagination
+                # Get paginated results
                 final_query = f"{base_query} ORDER BY RANK LIMIT ? OFFSET ?"
                 await cursor.execute(final_query, params + [per_page, pagination["offset"]])
                 result_isbn_data = await cursor.fetchall()
                 
-                # Get detailed book information
+                # Fetch detailed book info for the result ISBNs
                 if result_isbn_data:
                     isbn_list = [row['ROWID'] for row in result_isbn_data]
                     books_data = await self._get_books_by_isbns(cursor, isbn_list)
                 else:
                     books_data = []
                 
-                # Convert to response models
+                # Convert DB rows to response models
                 books = [self._row_to_book_response(row) for row in books_data]
                 
                 # Log search for analytics
@@ -122,6 +121,7 @@ class BookService:
             async with self.database_manager.get_connection() as conn:
                 cursor = await conn.cursor()
                 
+                # Query for book by ISBN
                 await cursor.execute("SELECT * FROM books WHERE isbn = ?", (isbn,))
                 book_data = await cursor.fetchone()
                 
@@ -156,10 +156,10 @@ class BookService:
             SearchResponse with book results
         """
         try:
-            # Validate and truncate query
+            # Truncate query to max length
             query = truncate_string(query, MAX_QUERY_LENGTH)
             
-            
+            # Request vector search from model server
             time_start = time.time()
             response = await self.http_client.post(
                 f"{MODEL_SERVER_URL}/search/books",
@@ -170,7 +170,7 @@ class BookService:
             retrieved_isbns = search_data.get("retrieved_isbns", [])
             logger.info(f"Query embedding and FAISS search completed in {time.time() - time_start:.2f} seconds")
             
-            
+            # If no results, return empty response
             if not retrieved_isbns:
                 return SearchResponse(
                     results=[],
@@ -180,17 +180,18 @@ class BookService:
                     total_pages=1
                 )
 
-            # Get book details from database
+            # Get book details from database for retrieved ISBNs
             async with self.database_manager.get_connection() as conn:
                 cursor = await conn.cursor()
                 
-                # Calculate pagination
+                # Calculate pagination info
                 total_count = min(len(retrieved_isbns), limit)
                 pagination = calculate_pagination(total_count, page, per_page)
                 
-                # Get current page data
+                # Determine current page limit
                 current_page_limit = min(per_page, max(0, total_count - pagination["offset"]))
                 
+                # Query for book details by ISBNs
                 final_query = """
                     SELECT isbn, title, kdc, publication_year, intro, toc, nlk_subjects 
                     FROM books 
@@ -205,13 +206,13 @@ class BookService:
                 
                 books_data = await cursor.fetchall()
                 
-                # Sort by original FAISS order
+                # Sort results to match FAISS order
                 books_data = sorted(
                     books_data, 
                     key=lambda x: retrieved_isbns.index(x[0])
                 )
 
-                # Convert to response models
+                # Convert DB rows to response models
                 books = [self._row_to_book_response(row) for row in books_data]
                 
                 # Log search for analytics
@@ -241,6 +242,7 @@ class BookService:
         
         Args:
             node_id: Subject node ID
+            limit: Maximum number of books to return
         Returns:
             BookListResponse with related books
         """
@@ -250,6 +252,7 @@ class BookService:
                 raise HTTPException(status_code=400, detail="주제 ID를 제공해야 합니다.")
             async with self.database_manager.get_connection() as conn:
                 cursor = await conn.cursor()
+                # Query for ISBNs related to the subject node
                 query = "SELECT isbn FROM book_subject_index WHERE node_id = ?"
                 await cursor.execute(query, (node_id,))
                 
@@ -263,6 +266,7 @@ class BookService:
                 # Flatten the list of tuples to a list of ISBNs
                 retrieved_isbns = [row[0] for row in retrieved_isbns]
                 
+                # Query for book details by ISBNs
                 query = """
                 SELECT isbn, title, kdc, publication_year, intro, toc, nlk_subjects FROM books 
                 WHERE isbn IN ({}) ORDER BY publication_year DESC LIMIT ?
@@ -272,6 +276,7 @@ class BookService:
 
                 books_data = await cursor.fetchall()
 
+                # Convert DB rows to response models
                 books = [self._row_to_book_response(row) for row in books_data]
 
                 # Log search for analytics
@@ -309,6 +314,7 @@ class BookService:
         count_query = "SELECT COUNT(*) FROM books_fts"
         params = []
         
+        # Build WHERE clause based on input
         if query:
             base_query += " WHERE title MATCH ? OR intro MATCH ? OR toc MATCH ?"
             count_query += " WHERE title MATCH ? OR intro MATCH ? OR toc MATCH ?"
@@ -365,17 +371,23 @@ class BookService:
         )
 
 
-# 전역 서비스 인스턴스
+# 전역 서비스 인스턴스 (global service instance)
 _book_service_instance = None
 
 def set_book_service(database_manager: DatabaseManager):
-    """전역 book service 인스턴스 설정"""
+    """
+    Set the global book service instance.
+    Should be called once during application startup.
+    """
     global _book_service_instance
     _book_service_instance = BookService(database_manager)
 
 @lru_cache()
 def get_book_service() -> BookService:
-    """FastAPI 의존성으로 사용할 book service 인스턴스 반환"""
+    """
+    Return the global book service instance for FastAPI dependency injection.
+    Raises RuntimeError if not initialized.
+    """
     if _book_service_instance is None:
         raise RuntimeError("Book service not initialized")
     return _book_service_instance
