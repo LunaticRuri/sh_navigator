@@ -76,9 +76,9 @@ def analyze_user_needs(client: genai.Client, user_input: str) -> UserNeedsAnalys
                 needs_exist=True,
                 needs=[
                     UserNeeds(
-                        _subject=need.get("subject", ""),
-                        _predicate=need.get("predicate", ""),
-                        _object=need.get("object", ""),
+                        subject_=need.get("subject", ""),
+                        predicate_=need.get("predicate", ""),
+                        object_=need.get("object", ""),
                         keywords=need.get("keywords", [])
                     ) for need in needs
                 ]

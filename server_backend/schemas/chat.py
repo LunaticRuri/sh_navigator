@@ -88,9 +88,9 @@ class SessionResponse(BaseModel):
 
 
 class UserNeeds(BaseModel):
-    _subject: str = Field(..., description="Subject of the user need")
-    _predicate: str = Field(..., description="Predicate of the user need")
-    _object: str = Field(..., description="Object of the user need")
+    subject_: str = Field(..., description="Subject of the user need")
+    predicate_: str = Field(..., description="Predicate of the user need")
+    object_: str = Field(..., description="Object of the user need")
     keywords: List[str] = Field(..., min_items=3, description="Keywords related to the user need")
 
 class UserNeedsAnalysis(BaseModel):
