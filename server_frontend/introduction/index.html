@@ -6,7 +6,6 @@
     <meta name="description" content="LLM과 지식 네트워크 기술을 결합하여 도서관의 잠재된 가치를 재발견하고, 이용자에게 우연한 발견의 즐거움을 선사하는 차세대 정보 탐색 서비스입니다.">
     <meta name="keywords" content="도서관, LLM, 주제명표목, 지식네트워크, 정보탐색, RAG, 챗봇, 시각화">
     <meta name="author" content="Subject Heading Network Service">
-    <meta name="robots" content="index, follow">
     <meta name="theme-color" content="#4f46e5">
     
     <!-- Favicon -->
@@ -59,7 +58,7 @@
     <!-- Header -->
     <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm" role="banner">
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center" role="navigation" aria-label="주 네비게이션">
-            <div class="text-2xl font-bold text-gray-900">
+            <div class="text-1xl font-bold text-gray-900">
                 2025 도서관 데이터 활용 공모전 [서비스 아이디어 제안] 부문 
             </div>
             <div class="hidden md:flex space-x-6 items-center">
@@ -67,6 +66,9 @@
                 <a href="#solution" class="text-gray-600 hover:text-indigo-600 transition" aria-label="핵심 솔루션 섹션으로 이동">핵심 솔루션</a>
                 <a href="#features" class="text-gray-600 hover:text-indigo-600 transition" aria-label="주요 기능 섹션으로 이동">주요 기능</a>
                 <a href="#vision" class="text-gray-600 hover:text-indigo-600 transition" aria-label="기대 효과 섹션으로 이동">기대 효과</a>
+                <a href="https://shnavigator.app" target="_blank" rel="noopener noreferrer" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition btn-primary" aria-label="프로토타입 사이트 열기">
+                    프로토타입
+                </a>
                 <a href="https://github.com/LunaticRuri/sh_navigator" target="_blank" rel="noopener noreferrer" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition btn-primary" aria-label="GitHub 저장소 새 창에서 열기">
                     GitHub
                 </a>
@@ -89,11 +91,11 @@
         <!-- Hero Section -->
         <section class="bg-white" aria-labelledby="hero-title">
             <div class="container mx-auto px-6 py-20 md:py-32 text-center">
-                <h1 id="hero-title" class="text-4xl md:text-6xl font-bold text-gray-900 leading-tight mb-8">
+                <h1 id="hero-title" class="text-3xl md:text-5xl font-bold text-gray-900 leading-tight mb-8">
                     능동적 정보 탐색을 돕는 LLM 보완 주제명 표목 네트워크 서비스 제안
                 </h1>
                 <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-                    이용자의 정보탐색 능동성 제고 <br> + <br> 다가오는 AI 시대에 적의한 새로운 정보 탐색 경험을 제공
+                    이용자의 정보 탐색 능동성 제고 <br> + <br> 다가오는 AI 시대에 적의한 새로운 정보 탐색 경험을 제공
                 </p>
                 <a href="#solution" class="bg-indigo-600 text-white px-8 py-3 rounded-lg font-bold text-lg hover:bg-indigo-700 transition-transform transform hover:scale-105 btn-primary inline-block" aria-label="핵심 솔루션 섹션으로 이동">
                     솔루션 자세히 보기
@@ -105,8 +107,8 @@
         <section id="problem" class="py-20 md:py-28 section-fade-in" aria-labelledby="problem-title">
             <div class="container mx-auto px-6">
                 <div class="text-center mb-12">
-                    <h2 id="problem-title" class="text-3xl md:text-4xl font-bold text-gray-900">우리는 왜 새로운 정보 탐색 방식이 필요할까요?</h2>
-                    <p class="text-lg text-gray-600 mt-4 max-w-2xl mx-auto">기존의 방식은 정보의 바다에서 길을 잃게 만들고 있습니다.</p>
+                    <h2 id="problem-title" class="text-3xl md:text-4xl font-bold text-gray-900">왜 새로운 정보 탐색 방식이 필요할까요?</h2>
+                    <p class="text-lg text-gray-600 mt-4 max-w-2xl mx-auto">도서관 내 비치된 검색용 PC, Youtube, ChatGPT에서 영감을 받았습니다.</p>
                 </div>
                 <div class="grid md:grid-cols-2 gap-10 items-center">
                     <div class="space-y-8">
@@ -138,6 +140,12 @@
                             </div>
                         </article>
                     </div>
+                    <div class="bg-white p-4 rounded-2xl shadow-lg border border-gray-200 hover-scale">
+                        <img src="./img/old_pc.jpg" 
+                             alt="출처: https://ko.wikipedia.org/wiki/파일:국립중앙도서관_4층_검색코너.jpg" 
+                             class="rounded-lg responsive-image"
+                             loading="lazy">
+                    </div>
                 </div>
             </div>
         </section>
@@ -154,13 +162,13 @@
                         노드 <span class="text-3xl font-bold text-yellow-300 stat-number">257,541</span>개 | 
                         관계 <span class="text-3xl font-bold text-yellow-300 stat-number">3,433,455</span>개+
                     </p>
-                    <p class="mt-2">기존의 '주제명 표목표' 시스템에 조금의 비용 투입 만으로도 이용자에게 새로운 정보 탐색 경험 제공 가능 </p>
+                    <p class="mt-2">기존의 '주제명 표목표' 시스템에 조금의 비용 투입만으로도 이용자에게 새로운 정보 탐색 경험 제공 가능 </p>
                 </div>
                 <div class="grid md:grid-cols-3 gap-8 mt-12 text-center">
                     <article class="bg-gray-50 p-8 rounded-xl border border-gray-200 hover:shadow-lg transition feature-card">
                         <i data-lucide="brain-circuit" class="mx-auto text-indigo-600 h-12 w-12 mb-4" aria-hidden="true"></i>
                         <h3 class="text-xl font-bold mb-2">의미의 명확화 (Enrichment)</h3>
-                        <p class="text-gray-600">LLM을 활용해 빈약했던 주제명 정의를 상세하게 보강하여 각 주제의 의미론적 가치를 극대화합니다.</p>
+                        <p class="text-gray-600">LLM을 활용해 부족했던 주제명 정의를 상세하게 보강하여 각 주제의 의미론적 가치를 극대화합니다.</p>
                     </article>
                     <article class="bg-gray-50 p-8 rounded-xl border border-gray-200 hover:shadow-lg transition feature-card">
                         <i data-lucide="mouse-pointer-click" class="mx-auto text-indigo-600 h-12 w-12 mb-4" aria-hidden="true"></i>
@@ -181,7 +189,7 @@
             <div class="container mx-auto px-6">
                 <div class="text-center mb-16">
                     <h2 id="features-title" class="text-3xl md:text-4xl font-bold text-gray-900">무엇을 할 수 있나요?</h2>
-                    <p class="text-lg text-gray-600 mt-4 max-w-2xl mx-auto">단순 서명, 주제명 검색을 넘어, 지식과 상호작용하는 새로운 경험을 제공합니다.</p>
+                    <p class="text-lg text-gray-600 mt-4 max-w-2xl mx-auto">단순 서명, 주제명 검색을 넘어, 주제명 표목을 이용해 이용자에게 새로운 지적 경험을 제공합니다.</p>
                 </div>
                 
                 <!-- Feature 1: Semantic Search -->
@@ -203,31 +211,10 @@
                              loading="lazy">
                     </div>
                 </article>
-
-                <!-- Feature 2: RAG Chatbot -->
-                <article class="grid md:grid-cols-2 gap-12 items-center mb-20">
-                     <div class="bg-white p-4 rounded-2xl shadow-lg border border-gray-200 order-last md:order-first hover-scale">
-                        <img src="https://placehold.co/600x450/e0e7ff/3730a3?text=RAG+Chatbot+UI" 
-                             alt="AI 사서 챗봇 사용자 인터페이스의 예시 화면" 
-                             class="rounded-lg responsive-image"
-                             loading="lazy">
-                    </div>
-                    <div>
-                        <span class="text-indigo-600 font-semibold" aria-label="두 번째 사용 사례">Use Case 02</span>
-                        <h3 class="text-3xl font-bold mt-2 mb-4">AI 사서 챗봇</h3>
-                        <p class="text-gray-600 mb-6">주제명 표목 네트워크를 지식 기반(Knowledge Base)으로 활용하는 RAG(검색 증강 생성) 챗봇입니다. "RAG가 뭐지?"와 같은 질문부터 "APA 스타일로 과제를 써야 하는데 참고할 만한 자료 추천해줘" 같은 복잡한 요구까지, 신뢰성 높은 답변과 관련 자료를 함께 제공합니다.</p>
-                         <div class="flex flex-wrap gap-2">
-                            <span class="bg-indigo-100 text-indigo-800 text-sm font-medium px-3 py-1 rounded-full">신뢰성 높은 답변</span>
-                            <span class="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">과제 해결 지원</span>
-                            <span class="bg-yellow-100 text-yellow-800 text-sm font-medium px-3 py-1 rounded-full">맥락적 이해</span>
-                        </div>
-                    </div>
-                </article>
-
-                <!-- Feature 3: Visualization -->
+                <!-- Feature 2: Visualization -->
                 <article class="grid md:grid-cols-2 gap-12 items-center">
                     <div>
-                        <span class="text-indigo-600 font-semibold" aria-label="세 번째 사용 사례">Use Case 03</span>
+                        <span class="text-indigo-600 font-semibold" aria-label="두 번째 사용 사례">Use Case 02</span>
                         <h3 class="text-3xl font-bold mt-2 mb-4">네트워크 시각화 탐색</h3>
                         <p class="text-gray-600 mb-6">지식 네트워크를 직접 눈으로 보며 탐험하는 경험을 제공합니다. 특정 주제를 중심으로 어떤 지식들이 어떻게 연결되어 있는지 직관적으로 파악하고, 생각지도 못했던 새로운 관심사를 발견하는 '지적 탐험'을 즐길 수 있습니다.</p>
                         <div class="flex flex-wrap gap-2">
@@ -238,10 +225,29 @@
                     </div>
                     <div class="bg-white p-4 rounded-2xl shadow-lg border border-gray-200 hover-scale">
                          <!-- 실제 네트워크 시각화 이미지 -->
-                        <img src="https://i.imgur.com/8f8eZ2c.png" 
+                        <img src="./img/network_visualization_example.png" 
                              alt="주제명 표목 네트워크의 시각화 예시 - 노드들이 연결선으로 연결된 네트워크 구조를 보여줌" 
                              class="rounded-lg object-cover responsive-image"
                              loading="lazy">
+                    </div>
+                </article>
+                <!-- Feature 3: RAG Chatbot -->
+                <article class="grid md:grid-cols-2 gap-12 items-center mb-20">
+                     <div class="bg-white p-4 rounded-2xl shadow-lg border border-gray-200 order-last md:order-first hover-scale">
+                        <img src="https://placehold.co/600x450/e0e7ff/3730a3?text=RAG+Chatbot+UI" 
+                             alt="AI 사서 챗봇 사용자 인터페이스의 예시 화면" 
+                             class="rounded-lg responsive-image"
+                             loading="lazy">
+                    </div>
+                    <div>
+                        <span class="text-indigo-600 font-semibold" aria-label="세 번째 사용 사례">Use Case 03</span>
+                        <h3 class="text-3xl font-bold mt-2 mb-4">AI 사서 챗봇</h3>
+                        <p class="text-gray-600 mb-6">주제명 표목 네트워크를 지식 기반(Knowledge Base)으로 활용하는 RAG(검색 증강 생성) 챗봇입니다. <br> "RAG가 뭐지?"와 같은 질문부터 "APA 스타일로 과제를 써야 하는데 참고할 만한 자료 추천해줘" 같은 복잡한 요구까지, 신뢰성 높은 답변과 관련 자료를 함께 제공합니다.</p>
+                         <div class="flex flex-wrap gap-2">
+                            <span class="bg-indigo-100 text-indigo-800 text-sm font-medium px-3 py-1 rounded-full">신뢰성 높은 답변</span>
+                            <span class="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">과제 해결 지원</span>
+                            <span class="bg-yellow-100 text-yellow-800 text-sm font-medium px-3 py-1 rounded-full">맥락적 이해</span>
+                        </div>
                     </div>
                 </article>
             </div>
@@ -297,7 +303,7 @@
     <!-- Footer -->
     <footer class="bg-gray-900 text-white" role="contentinfo">
         <div class="container mx-auto px-6 py-12 text-center">
-            <p class="font-semibold text-lg mb-2">문의: <a href="mailto:nuriyonsei@yonsei.ac.kr" class="underline hover:text-indigo-400 transition">nuriyonsei@yonsei.ac.kr</a></p>
+            <p class="font-semibold text-lg mb-2">문의: <a href="mailto:yggnamu@gmail.com" class="underline hover:text-indigo-400 transition">yggnamu@gmail.com</a></p>
             <p class="text-gray-400 mb-6">읽어 주셔서 감사합니다.</p>
             <div class="flex justify-center space-x-6" role="list">
                 <a href="https://github.com/LunaticRuri/sh_navigator" 
