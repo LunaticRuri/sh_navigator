@@ -1,0 +1,77 @@
+{
+  "name": "주제명 표목 네트워크 서비스",
+  "short_name": "SH Navigator",
+  "description": "LLM과 지식 네트워크 기술을 결합한 능동적 정보 탐색 서비스",
+  "start_url": "/introduction/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait-primary",
+  "categories": ["education", "productivity", "reference"],
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "검색",
+      "short_name": "검색",
+      "description": "지능형 도서 검색",
+      "url": "/search",
+      "icons": [
+        {
+          "src": "/search-icon-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "챗봇",
+      "short_name": "챗봇",
+      "description": "AI 사서 챗봇",
+      "url": "/chat",
+      "icons": [
+        {
+          "src": "/chat-icon-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "네트워크",
+      "short_name": "네트워크",
+      "description": "지식 네트워크 시각화",
+      "url": "/network",
+      "icons": [
+        {
+          "src": "/network-icon-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ]
+}

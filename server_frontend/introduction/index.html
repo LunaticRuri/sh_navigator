@@ -1,262 +1,316 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" prefix="og: http://ogp.me/ns#">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="LLM과 지식 네트워크 기술을 결합하여 도서관의 잠재된 가치를 재발견하고, 이용자에게 우연한 발견의 즐거움을 선사하는 차세대 정보 탐색 서비스입니다.">
+    <meta name="keywords" content="도서관, LLM, 주제명표목, 지식네트워크, 정보탐색, RAG, 챗봇, 시각화">
+    <meta name="author" content="Subject Heading Network Service">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#4f46e5">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="../favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    
     <title>능동적 정보 탐색을 돕는 LLM 보완 주제명 표목 네트워크 서비스</title>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap"></noscript>
+    
+    <!-- Styles -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Scripts -->
+    <script src="https://unpkg.com/lucide@latest" defer></script>
+    <script src="script.js" defer></script>
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Subject Heading Network Service",
+        "description": "LLM과 지식 네트워크 기술을 결합하여 도서관의 잠재된 가치를 재발견하고, 이용자에게 우연한 발견의 즐거움을 선사하는 차세대 정보 탐색 서비스",
+        "url": "https://sh-navigator.com",
+        "author": {
+            "@type": "Organization",
+            "name": "Subject Heading Network Service"
+        },
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Web",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "KRW"
         }
-        .section-fade-in {
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-        }
-        .section-fade-in.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    </style>
+    }
+    </script>
 </head>
 <body class="bg-gray-50 text-gray-800">
+    <!-- Skip Link for Accessibility -->
+    <a href="#main-content" class="skip-link">메인 콘텐츠로 바로가기</a>
 
     <!-- Header -->
-    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
-        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm" role="banner">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center" role="navigation" aria-label="주 네비게이션">
             <div class="text-2xl font-bold text-gray-900">
-                <span class="text-indigo-600">지식</span> 탐험의 새로운 나침반
+                2025 도서관 데이터 활용 공모전 [서비스 아이디어 제안] 부문 
             </div>
             <div class="hidden md:flex space-x-6 items-center">
-                <a href="#problem" class="text-gray-600 hover:text-indigo-600 transition">문제 인식</a>
-                <a href="#solution" class="text-gray-600 hover:text-indigo-600 transition">핵심 솔루션</a>
-                <a href="#features" class="text-gray-600 hover:text-indigo-600 transition">주요 기능</a>
-                <a href="#vision" class="text-gray-600 hover:text-indigo-600 transition">기대 효과</a>
-                <a href="https://github.com/LunaticRuri/sh_navigator" target="_blank" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">GitHub</a>
+                <a href="#problem" class="text-gray-600 hover:text-indigo-600 transition" aria-label="문제 인식 섹션으로 이동">문제 인식</a>
+                <a href="#solution" class="text-gray-600 hover:text-indigo-600 transition" aria-label="핵심 솔루션 섹션으로 이동">핵심 솔루션</a>
+                <a href="#features" class="text-gray-600 hover:text-indigo-600 transition" aria-label="주요 기능 섹션으로 이동">주요 기능</a>
+                <a href="#vision" class="text-gray-600 hover:text-indigo-600 transition" aria-label="기대 효과 섹션으로 이동">기대 효과</a>
+                <a href="https://github.com/LunaticRuri/sh_navigator" target="_blank" rel="noopener noreferrer" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition btn-primary" aria-label="GitHub 저장소 새 창에서 열기">
+                    GitHub
+                </a>
             </div>
-            <button id="mobile-menu-button" class="md:hidden">
-                <i data-lucide="menu"></i>
+            <button id="mobile-menu-button" class="md:hidden p-2 rounded-lg hover:bg-gray-100 transition" aria-label="모바일 메뉴 열기" aria-expanded="false" aria-controls="mobile-menu">
+                <i data-lucide="menu" aria-hidden="true"></i>
             </button>
         </nav>
         <!-- Mobile Menu -->
-        <div id="mobile-menu" class="hidden md:hidden px-6 pb-4">
-            <a href="#problem" class="block py-2 text-gray-600 hover:text-indigo-600">문제 인식</a>
-            <a href="#solution" class="block py-2 text-gray-600 hover:text-indigo-600">핵심 솔루션</a>
-            <a href="#features" class="block py-2 text-gray-600 hover:text-indigo-600">주요 기능</a>
-            <a href="#vision" class="block py-2 text-gray-600 hover:text-indigo-600">기대 효과</a>
-            <a href="https://github.com/LunaticRuri/sh_navigator" target="_blank" class="block mt-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-center">GitHub</a>
+        <div id="mobile-menu" class="hidden md:hidden px-6 pb-4 mobile-menu" role="menu" aria-labelledby="mobile-menu-button">
+            <a href="#problem" class="block py-2 text-gray-600 hover:text-indigo-600 transition" role="menuitem">문제 인식</a>
+            <a href="#solution" class="block py-2 text-gray-600 hover:text-indigo-600 transition" role="menuitem">핵심 솔루션</a>
+            <a href="#features" class="block py-2 text-gray-600 hover:text-indigo-600 transition" role="menuitem">주요 기능</a>
+            <a href="#vision" class="block py-2 text-gray-600 hover:text-indigo-600 transition" role="menuitem">기대 효과</a>
+            <a href="https://github.com/LunaticRuri/sh_navigator" target="_blank" rel="noopener noreferrer" class="block mt-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-center btn-primary" role="menuitem">GitHub</a>
         </div>
     </header>
 
-    <main>
+    <main id="main-content" role="main">
         <!-- Hero Section -->
-        <section class="bg-white">
+        <section class="bg-white" aria-labelledby="hero-title">
             <div class="container mx-auto px-6 py-20 md:py-32 text-center">
-                <h1 class="text-4xl md:text-6xl font-bold text-gray-900 leading-tight mb-4">정보의 수동적 소비자에서<br>능동적 지식 탐험가로</h1>
-                <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-8">LLM과 지식 네트워크 기술을 결합하여 도서관의 잠재된 가치를 재발견하고, 이용자에게 '우연한 발견(Serendipity)'의 즐거움을 선사하는 차세대 정보 탐색 서비스를 제안합니다.</p>
-                <a href="#solution" class="bg-indigo-600 text-white px-8 py-3 rounded-lg font-bold text-lg hover:bg-indigo-700 transition-transform transform hover:scale-105">솔루션 자세히 보기</a>
+                <h1 id="hero-title" class="text-4xl md:text-6xl font-bold text-gray-900 leading-tight mb-8">
+                    능동적 정보 탐색을 돕는 LLM 보완 주제명 표목 네트워크 서비스 제안
+                </h1>
+                <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+                    이용자의 정보탐색 능동성 제고 <br> + <br> 다가오는 AI 시대에 적의한 새로운 정보 탐색 경험을 제공
+                </p>
+                <a href="#solution" class="bg-indigo-600 text-white px-8 py-3 rounded-lg font-bold text-lg hover:bg-indigo-700 transition-transform transform hover:scale-105 btn-primary inline-block" aria-label="핵심 솔루션 섹션으로 이동">
+                    솔루션 자세히 보기
+                </a>
             </div>
         </section>
 
         <!-- Problem Section -->
-        <section id="problem" class="py-20 md:py-28 section-fade-in">
+        <section id="problem" class="py-20 md:py-28 section-fade-in" aria-labelledby="problem-title">
             <div class="container mx-auto px-6">
                 <div class="text-center mb-12">
-                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900">우리는 왜 새로운 정보 탐색 방식이 필요할까요?</h2>
+                    <h2 id="problem-title" class="text-3xl md:text-4xl font-bold text-gray-900">우리는 왜 새로운 정보 탐색 방식이 필요할까요?</h2>
                     <p class="text-lg text-gray-600 mt-4 max-w-2xl mx-auto">기존의 방식은 정보의 바다에서 길을 잃게 만들고 있습니다.</p>
                 </div>
                 <div class="grid md:grid-cols-2 gap-10 items-center">
                     <div class="space-y-8">
-                        <div class="flex items-start space-x-4">
-                            <div class="flex-shrink-0 bg-indigo-100 text-indigo-600 p-3 rounded-full">
+                        <article class="flex items-start space-x-4 feature-card">
+                            <div class="flex-shrink-0 bg-indigo-100 text-indigo-600 p-3 rounded-full" aria-hidden="true">
                                 <i data-lucide="library"></i>
                             </div>
                             <div>
                                 <h3 class="text-xl font-bold mb-2">정체된 도서관 검색</h3>
-                                <p class="text-gray-600">도서관 정보 검색은 수십 년간 큰 변화 없이 '소장처 확인' 수준에 머물러 있습니다. 이용자의 다양한 정보 요구를 충족시키기 어렵고, 주제 기반의 깊이 있는 탐색이 불가능합니다.</p>
+                                <p class="text-gray-600">도서관 정보 검색은 수십 년간 큰 변화 없이 '소장처 확인' 수준에 머물러 있습니다. 이용자의 다양한 정보 요구를 충족시키기 어렵고, 주제 기반의 깊이 있는 탐색이 어렵습니다.</p>
                             </div>
-                        </div>
-                        <div class="flex items-start space-x-4">
-                            <div class="flex-shrink-0 bg-indigo-100 text-indigo-600 p-3 rounded-full">
+                        </article>
+                        <article class="flex items-start space-x-4 feature-card">
+                            <div class="flex-shrink-0 bg-indigo-100 text-indigo-600 p-3 rounded-full" aria-hidden="true">
                                 <i data-lucide="filter"></i>
                             </div>
                             <div>
-                                <h3 class="text-xl font-bold mb-2">'필터 버블'의 심화</h3>
-                                <p class="text-gray-600">상업적 추천 알고리즘은 이용자를 편향된 정보 환경에 가두어 '정신적 비만'을 유발합니다. 이는 주도적인 정보 탐색 능력을 저하시키고 사회적 소통을 저해하는 원인이 됩니다.</p>
+                                <h3 class="text-xl font-bold mb-2">알고리즘을 통한 수동적 정보 소비</h3>
+                                <p class="text-gray-600">상업적 추천 알고리즘은 이용자를 편향된 정보 환경에 가두어 '정신적 비만'을 유발합니다. 이러한 상황 속에서 도서관은 이용자에게 정보의 선택권을 보장하는 좋은 정보 제공자 입니다.</p>
                             </div>
-                        </div>
-                    </div>
-                    <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
-                        <img src="https://placehold.co/600x400/e9d5ff/4f46e5?text=Information+Overload" alt="정보 과잉 시대의 문제점" class="rounded-lg">
+                        </article>
+                        <article class="flex items-start space-x-4 feature-card">
+                            <div class="flex-shrink-0 bg-indigo-100 text-indigo-600 p-3 rounded-full" aria-hidden="true">
+                                <i data-lucide="bot"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold mb-2">AI 중심 정보 이용 행태</h3>
+                                <p class="text-gray-600">최근 ChatGPT와 같은 AI가 정보 습득의 주 원천이 되고 있습니다. 도서관이 그동안 축적한 '메타데이터'는 이러한 AI 자동 생성의 유용한 근거(grounding)이 될 수 있습니다.</p>
+                            </div>
+                        </article>
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- Solution Section -->
-        <section id="solution" class="bg-white py-20 md:py-28 section-fade-in">
+        <section id="solution" class="bg-white py-20 md:py-28 section-fade-in" aria-labelledby="solution-title">
             <div class="container mx-auto px-6">
                 <div class="text-center mb-12">
-                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900">핵심 솔루션: LLM 보완 주제명 표목 네트워크</h2>
-                    <p class="text-lg text-gray-600 mt-4 max-w-3xl mx-auto">도서관의 지적 자산인 '주제명 표목'을 LLM 기술로 재탄생시켜, 분절된 지식을 하나의 거대한 지식 네트워크로 연결합니다.</p>
+                    <h2 id="solution-title" class="text-3xl md:text-4xl font-bold text-gray-900">핵심 솔루션: LLM 보완 주제명 표목 네트워크</h2>
+                    <p class="text-lg text-gray-600 mt-4 max-w-3xl mx-auto">도서관의 지적 자산인 '주제명 표목'을 LLM 기술로 재탄생시켜,<br> 분절된 지식을 하나의 거대한 지식 네트워크로 연결합니다.</p>
                 </div>
-                <div class="text-center bg-indigo-600 text-white p-8 rounded-2xl shadow-xl">
-                    <p class="text-2xl font-bold">노드 <span class="text-3xl font-bold text-yellow-300">257,541</span>개 | 관계 <span class="text-3xl font-bold text-yellow-300">3,433,455</span>개+</p>
-                    <p class="mt-2">하나의 거대한 지식 네트워크가 당신의 탐험을 기다립니다.</p>
+                <div class="text-center bg-indigo-600 text-white p-8 rounded-2xl shadow-xl hover-scale">
+                    <p class="text-2xl font-bold">
+                        노드 <span class="text-3xl font-bold text-yellow-300 stat-number">257,541</span>개 | 
+                        관계 <span class="text-3xl font-bold text-yellow-300 stat-number">3,433,455</span>개+
+                    </p>
+                    <p class="mt-2">기존의 '주제명 표목표' 시스템에 조금의 비용 투입 만으로도 이용자에게 새로운 정보 탐색 경험 제공 가능 </p>
                 </div>
                 <div class="grid md:grid-cols-3 gap-8 mt-12 text-center">
-                    <div class="bg-gray-50 p-8 rounded-xl border border-gray-200 hover:shadow-lg transition">
-                        <i data-lucide="brain-circuit" class="mx-auto text-indigo-600 h-12 w-12 mb-4"></i>
+                    <article class="bg-gray-50 p-8 rounded-xl border border-gray-200 hover:shadow-lg transition feature-card">
+                        <i data-lucide="brain-circuit" class="mx-auto text-indigo-600 h-12 w-12 mb-4" aria-hidden="true"></i>
                         <h3 class="text-xl font-bold mb-2">의미의 명확화 (Enrichment)</h3>
                         <p class="text-gray-600">LLM을 활용해 빈약했던 주제명 정의를 상세하게 보강하여 각 주제의 의미론적 가치를 극대화합니다.</p>
-                    </div>
-                    <div class="bg-gray-50 p-8 rounded-xl border border-gray-200 hover:shadow-lg transition">
-                        <i data-lucide="mouse-pointer-click" class="mx-auto text-indigo-600 h-12 w-12 mb-4"></i>
+                    </article>
+                    <article class="bg-gray-50 p-8 rounded-xl border border-gray-200 hover:shadow-lg transition feature-card">
+                        <i data-lucide="mouse-pointer-click" class="mx-auto text-indigo-600 h-12 w-12 mb-4" aria-hidden="true"></i>
                         <h3 class="text-xl font-bold mb-2">탐색의 유연화 (Flexibility)</h3>
                         <p class="text-gray-600">자연어 처리와 벡터 임베딩을 통해, 이용자의 일상적인 표현만으로도 가장 적합한 정보 자원에 도달할 수 있도록 돕습니다.</p>
-                    </div>
-                    <div class="bg-gray-50 p-8 rounded-xl border border-gray-200 hover:shadow-lg transition">
-                        <i data-lucide="network" class="mx-auto text-indigo-600 h-12 w-12 mb-4"></i>
+                    </article>
+                    <article class="bg-gray-50 p-8 rounded-xl border border-gray-200 hover:shadow-lg transition feature-card">
+                        <i data-lucide="network" class="mx-auto text-indigo-600 h-12 w-12 mb-4" aria-hidden="true"></i>
                         <h3 class="text-xl font-bold mb-2">관계의 확장 (Connectivity)</h3>
                         <p class="text-gray-600">벡터 유사도 분석과 LLM 기반 관계 생성을 통해 단절된 지식들을 연결하고, 풍부한 탐색 경로를 제공합니다.</p>
-                    </div>
+                    </article>
                 </div>
             </div>
         </section>
-
+<!--TODO: 여기서 부터 고치기 시작.-->
         <!-- Features Section -->
-        <section id="features" class="py-20 md:py-28 section-fade-in">
+        <section id="features" class="py-20 md:py-28 section-fade-in" aria-labelledby="features-title">
             <div class="container mx-auto px-6">
                 <div class="text-center mb-16">
-                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900">무엇을 할 수 있나요?</h2>
-                    <p class="text-lg text-gray-600 mt-4 max-w-2xl mx-auto">단순 검색을 넘어, 지식과 상호작용하는 새로운 경험을 제공합니다.</p>
+                    <h2 id="features-title" class="text-3xl md:text-4xl font-bold text-gray-900">무엇을 할 수 있나요?</h2>
+                    <p class="text-lg text-gray-600 mt-4 max-w-2xl mx-auto">단순 서명, 주제명 검색을 넘어, 지식과 상호작용하는 새로운 경험을 제공합니다.</p>
                 </div>
                 
                 <!-- Feature 1: Semantic Search -->
-                <div class="grid md:grid-cols-2 gap-12 items-center mb-20">
+                <article class="grid md:grid-cols-2 gap-12 items-center mb-20">
                     <div>
-                        <span class="text-indigo-600 font-semibold">Use Case 01</span>
+                        <span class="text-indigo-600 font-semibold" aria-label="첫 번째 사용 사례">Use Case 01</span>
                         <h3 class="text-3xl font-bold mt-2 mb-4">지능형 도서 및 주제 탐색</h3>
                         <p class="text-gray-600 mb-6">"아프리카 역사에 대한 개괄적인 책"과 같은 자연어 질문만으로 원하는 도서를 찾고, 관련 주제로 자연스럽게 탐색을 확장할 수 있습니다. KDC(한국십진분류법) 연계를 통해 온라인 탐색이 실제 서가 위치 안내로 이어집니다.</p>
-                        <div class="flex space-x-4">
+                        <div class="flex flex-wrap gap-2">
                             <span class="bg-indigo-100 text-indigo-800 text-sm font-medium px-3 py-1 rounded-full">자연어 검색</span>
                             <span class="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">KDC 연계</span>
                             <span class="bg-yellow-100 text-yellow-800 text-sm font-medium px-3 py-1 rounded-full">주제 확장</span>
                         </div>
                     </div>
-                    <div class="bg-white p-4 rounded-2xl shadow-lg border border-gray-200">
-                        <img src="https://placehold.co/600x450/f3f4f6/1f2937?text=Semantic+Search+UI" alt="지능형 검색 UI 예시" class="rounded-lg">
+                    <div class="bg-white p-4 rounded-2xl shadow-lg border border-gray-200 hover-scale">
+                        <img src="https://placehold.co/600x450/f3f4f6/1f2937?text=Semantic+Search+UI" 
+                             alt="지능형 검색 사용자 인터페이스의 예시 화면" 
+                             class="rounded-lg responsive-image"
+                             loading="lazy">
                     </div>
-                </div>
+                </article>
 
                 <!-- Feature 2: RAG Chatbot -->
-                <div class="grid md:grid-cols-2 gap-12 items-center mb-20">
-                     <div class="bg-white p-4 rounded-2xl shadow-lg border border-gray-200 order-last md:order-first">
-                        <img src="https://placehold.co/600x450/e0e7ff/3730a3?text=RAG+Chatbot+UI" alt="AI 사서 챗봇 UI 예시" class="rounded-lg">
+                <article class="grid md:grid-cols-2 gap-12 items-center mb-20">
+                     <div class="bg-white p-4 rounded-2xl shadow-lg border border-gray-200 order-last md:order-first hover-scale">
+                        <img src="https://placehold.co/600x450/e0e7ff/3730a3?text=RAG+Chatbot+UI" 
+                             alt="AI 사서 챗봇 사용자 인터페이스의 예시 화면" 
+                             class="rounded-lg responsive-image"
+                             loading="lazy">
                     </div>
                     <div>
-                        <span class="text-indigo-600 font-semibold">Use Case 02</span>
+                        <span class="text-indigo-600 font-semibold" aria-label="두 번째 사용 사례">Use Case 02</span>
                         <h3 class="text-3xl font-bold mt-2 mb-4">AI 사서 챗봇</h3>
                         <p class="text-gray-600 mb-6">주제명 표목 네트워크를 지식 기반(Knowledge Base)으로 활용하는 RAG(검색 증강 생성) 챗봇입니다. "RAG가 뭐지?"와 같은 질문부터 "APA 스타일로 과제를 써야 하는데 참고할 만한 자료 추천해줘" 같은 복잡한 요구까지, 신뢰성 높은 답변과 관련 자료를 함께 제공합니다.</p>
-                         <div class="flex space-x-4">
+                         <div class="flex flex-wrap gap-2">
                             <span class="bg-indigo-100 text-indigo-800 text-sm font-medium px-3 py-1 rounded-full">신뢰성 높은 답변</span>
                             <span class="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">과제 해결 지원</span>
                             <span class="bg-yellow-100 text-yellow-800 text-sm font-medium px-3 py-1 rounded-full">맥락적 이해</span>
                         </div>
                     </div>
-                </div>
+                </article>
 
                 <!-- Feature 3: Visualization -->
-                <div class="grid md:grid-cols-2 gap-12 items-center">
+                <article class="grid md:grid-cols-2 gap-12 items-center">
                     <div>
-                        <span class="text-indigo-600 font-semibold">Use Case 03</span>
+                        <span class="text-indigo-600 font-semibold" aria-label="세 번째 사용 사례">Use Case 03</span>
                         <h3 class="text-3xl font-bold mt-2 mb-4">네트워크 시각화 탐색</h3>
                         <p class="text-gray-600 mb-6">지식 네트워크를 직접 눈으로 보며 탐험하는 경험을 제공합니다. 특정 주제를 중심으로 어떤 지식들이 어떻게 연결되어 있는지 직관적으로 파악하고, 생각지도 못했던 새로운 관심사를 발견하는 '지적 탐험'을 즐길 수 있습니다.</p>
-                        <div class="flex space-x-4">
+                        <div class="flex flex-wrap gap-2">
                             <span class="bg-indigo-100 text-indigo-800 text-sm font-medium px-3 py-1 rounded-full">직관적 이해</span>
                             <span class="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">우연한 발견</span>
                             <span class="bg-yellow-100 text-yellow-800 text-sm font-medium px-3 py-1 rounded-full">지식의 지도</span>
                         </div>
                     </div>
-                    <div class="bg-white p-4 rounded-2xl shadow-lg border border-gray-200">
-                         <!-- 보고서의 시각화 이미지를 여기에 넣습니다. -->
-                        <img src="https://i.imgur.com/8f8eZ2c.png" alt="주제명 표목 네트워크 시각화" class="rounded-lg object-cover">
+                    <div class="bg-white p-4 rounded-2xl shadow-lg border border-gray-200 hover-scale">
+                         <!-- 실제 네트워크 시각화 이미지 -->
+                        <img src="https://i.imgur.com/8f8eZ2c.png" 
+                             alt="주제명 표목 네트워크의 시각화 예시 - 노드들이 연결선으로 연결된 네트워크 구조를 보여줌" 
+                             class="rounded-lg object-cover responsive-image"
+                             loading="lazy">
                     </div>
-                </div>
+                </article>
             </div>
         </section>
 
         <!-- Vision Section -->
-        <section id="vision" class="bg-white py-20 md:py-28 section-fade-in">
+        <section id="vision" class="bg-white py-20 md:py-28 section-fade-in" aria-labelledby="vision-title">
             <div class="container mx-auto px-6">
                 <div class="text-center mb-12">
-                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900">기대 효과 및 미래 비전</h2>
+                    <h2 id="vision-title" class="text-3xl md:text-4xl font-bold text-gray-900">기대 효과 및 미래 비전</h2>
                     <p class="text-lg text-gray-600 mt-4 max-w-2xl mx-auto">이용자와 도서관, 그리고 우리 사회 모두를 위한 가치를 창출합니다.</p>
                 </div>
                 <div class="grid md:grid-cols-2 gap-8">
-                    <div class="bg-gray-50 p-8 rounded-xl border border-gray-200">
+                    <article class="bg-gray-50 p-8 rounded-xl border border-gray-200 feature-card">
                         <h3 class="text-2xl font-bold mb-4 text-indigo-600">이용자를 위하여</h3>
-                        <ul class="space-y-3 text-gray-600 list-disc list-inside">
-                            <li><strong>정보 탐색 장벽 해소:</strong> 전문 용어를 몰라도 일상적인 질문으로 탐색 시작</li>
-                            <li><strong>능동적 탐험가로의 성장:</strong> 자신만의 지식 체계를 세우며 정보의 주체로 성장</li>
-                            <li><strong>'우연한 발견'의 즐거움:</strong> 예상치 못한 주제와 만나며 지식의 지평 확장</li>
+                        <ul class="space-y-3 text-gray-600" role="list">
+                            <li class="flex items-start">
+                                <span class="text-indigo-600 mr-2" aria-hidden="true">•</span>
+                                <span><strong>정보 탐색 장벽 해소:</strong> 전문 용어를 몰라도 일상적인 질문으로 탐색 시작</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-indigo-600 mr-2" aria-hidden="true">•</span>
+                                <span><strong>능동적 탐험가로의 성장:</strong> 자신만의 지식 체계를 세우며 정보의 주체로 성장</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-indigo-600 mr-2" aria-hidden="true">•</span>
+                                <span><strong>'우연한 발견'의 즐거움:</strong> 예상치 못한 주제와 만나며 지식의 지평 확장</span>
+                            </li>
                         </ul>
-                    </div>
-                    <div class="bg-gray-50 p-8 rounded-xl border border-gray-200">
+                    </article>
+                    <article class="bg-gray-50 p-8 rounded-xl border border-gray-200 feature-card">
                         <h3 class="text-2xl font-bold mb-4 text-green-600">도서관을 위하여</h3>
-                        <ul class="space-y-3 text-gray-600 list-disc list-inside">
-                            <li><strong>도서관 자산 가치 재발견:</strong> 최소 비용으로 이용자 효용 극대화</li>
-                            <li><strong>데이터 기반 장서 개발:</strong> 이용자 탐색 경로 분석으로 '잠재 수요' 파악</li>
-                            <li><strong>미래 정보센터로서의 위상 확보:</strong> 신뢰성 높은 AI 지식 기반 제공자로 역할</li>
+                        <ul class="space-y-3 text-gray-600" role="list">
+                            <li class="flex items-start">
+                                <span class="text-green-600 mr-2" aria-hidden="true">•</span>
+                                <span><strong>도서관 자산 가치 재발견:</strong> 최소 비용으로 이용자 효용 극대화</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-green-600 mr-2" aria-hidden="true">•</span>
+                                <span><strong>데이터 기반 장서 개발:</strong> 이용자 탐색 경로 분석으로 '잠재 수요' 파악</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-green-600 mr-2" aria-hidden="true">•</span>
+                                <span><strong>미래 정보센터로서의 위상 확보:</strong> 신뢰성 높은 AI 지식 기반 제공자로 역할</span>
+                            </li>
                         </ul>
-                    </div>
+                    </article>
                 </div>
             </div>
         </section>
     </main>
 
     <!-- Footer -->
-    <footer class="bg-gray-900 text-white">
+    <footer class="bg-gray-900 text-white" role="contentinfo">
         <div class="container mx-auto px-6 py-12 text-center">
-            <h3 class="text-2xl font-bold mb-4">지식의 새로운 미래를 함께 열어갑니다.</h3>
-            <p class="text-gray-400 mb-6">본 프로젝트는 도서관의 역할과 정보 탐색의 미래에 대한 고민에서 시작되었습니다.</p>
-            <div class="flex justify-center space-x-6">
-                <a href="https://github.com/LunaticRuri/sh_navigator" target="_blank" class="text-gray-400 hover:text-white transition">
-                    <i data-lucide="github" class="h-8 w-8"></i>
+            <p class="font-semibold text-lg mb-2">문의: <a href="mailto:nuriyonsei@yonsei.ac.kr" class="underline hover:text-indigo-400 transition">nuriyonsei@yonsei.ac.kr</a></p>
+            <p class="text-gray-400 mb-6">읽어 주셔서 감사합니다.</p>
+            <div class="flex justify-center space-x-6" role="list">
+                <a href="https://github.com/LunaticRuri/sh_navigator" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   class="text-gray-400 hover:text-white transition p-2 rounded-lg"
+                   aria-label="GitHub 저장소 새 창에서 열기">
+                    <i data-lucide="github" class="h-8 w-8" aria-hidden="true"></i>
                 </a>
             </div>
-            <p class="text-gray-500 mt-8 text-sm">&copy; 2025 Subject Heading Network Service. All rights reserved.</p>
+            <p class="text-gray-500 mt-8 text-sm">&copy; 2025 Nuri Seok. All rights reserved.</p>
         </div>
     </footer>
 
-    <script>
-        lucide.createIcons();
-
-        // Mobile menu toggle
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const mobileMenu = document.getElementById('mobile-menu');
-        mobileMenuButton.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-        });
-
-        // Section fade-in animation
-        const sections = document.querySelectorAll('.section-fade-in');
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
-        }, {
-            threshold: 0.1
-        });
-
-        sections.forEach(section => {
-            observer.observe(section);
-        });
-    </script>
 </body>
 </html>

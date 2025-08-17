@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://sh-navigator.com/sitemap.xml
+
+# 크롤링 속도 제한
+Crawl-delay: 1
