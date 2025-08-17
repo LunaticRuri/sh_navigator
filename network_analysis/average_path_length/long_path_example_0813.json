@@ -1,0 +1,646 @@
+{
+  "timestamp": "2025-08-13T16:34:16.794254",
+  "total_paths_found": 10,
+  "paths": [
+    {
+      "source_id": "nlk:KSH1998041015",
+      "target_id": "nlk:KSH2003003236",
+      "path_length": 10,
+      "path": [
+        "nlk:KSH1998041015",
+        "nlk:KSH1998040500",
+        "nlk:KSH1998024415",
+        "nlk:KSH2002003381",
+        "nlk:KSH2004005528",
+        "nlk:KSH2002011684",
+        "nlk:KSH1998000218",
+        "nlk:KSH1998000222",
+        "nlk:KSH1998027323",
+        "nlk:KSH2003004195",
+        "nlk:KSH2003003236"
+      ],
+      "path_with_labels": [
+        {
+          "node_id": "nlk:KSH1998041015",
+          "label": "캡스턴 롤러[capstan roller]"
+        },
+        {
+          "node_id": "nlk:KSH1998040500",
+          "label": "캡스턴[capstan]"
+        },
+        {
+          "node_id": "nlk:KSH1998024415",
+          "label": "윈치[winch]"
+        },
+        {
+          "node_id": "nlk:KSH2002003381",
+          "label": "트롤 윈치[trawl winch]"
+        },
+        {
+          "node_id": "nlk:KSH2004005528",
+          "label": "트롤선 선원[--船船員]"
+        },
+        {
+          "node_id": "nlk:KSH2002011684",
+          "label": "트롤 어업[--漁業]"
+        },
+        {
+          "node_id": "nlk:KSH1998000218",
+          "label": "어업[漁業]"
+        },
+        {
+          "node_id": "nlk:KSH1998000222",
+          "label": "오징어 잡이"
+        },
+        {
+          "node_id": "nlk:KSH1998027323",
+          "label": "오징어"
+        },
+        {
+          "node_id": "nlk:KSH2003004195",
+          "label": "오징어과[--科]"
+        },
+        {
+          "node_id": "nlk:KSH2003003236",
+          "label": "좀귀 오징어"
+        }
+      ]
+    },
+    {
+      "source_id": "nlk:KSH1999013689",
+      "target_id": "nlk:KSH2004012240",
+      "path_length": 10,
+      "path": [
+        "nlk:KSH1999013689",
+        "nlk:KSH1999013681",
+        "nlk:KSH1999000307",
+        "nlk:KSH2001008639",
+        "nlk:KSH1999012423",
+        "nlk:KSH2001004015",
+        "nlk:KSH1998000218",
+        "nlk:KSH1998004603",
+        "nlk:KSH2004015076",
+        "nlk:KSH2004014992",
+        "nlk:KSH2004012240"
+      ],
+      "path_with_labels": [
+        {
+          "node_id": "nlk:KSH1999013689",
+          "label": "출병 거부[出兵拒否]"
+        },
+        {
+          "node_id": "nlk:KSH1999013681",
+          "label": "군무 태만의 죄[軍務怠慢--罪]"
+        },
+        {
+          "node_id": "nlk:KSH1999000307",
+          "label": "근무 태만[勤務怠慢]"
+        },
+        {
+          "node_id": "nlk:KSH2001008639",
+          "label": "직무 태만[職務怠慢]"
+        },
+        {
+          "node_id": "nlk:KSH1999012423",
+          "label": "직무[職務]"
+        },
+        {
+          "node_id": "nlk:KSH2001004015",
+          "label": "어업직[漁業職]"
+        },
+        {
+          "node_id": "nlk:KSH1998000218",
+          "label": "어업[漁業]"
+        },
+        {
+          "node_id": "nlk:KSH1998004603",
+          "label": "어류[魚類]"
+        },
+        {
+          "node_id": "nlk:KSH2004015076",
+          "label": "꽃자리(물고기)"
+        },
+        {
+          "node_id": "nlk:KSH2004014992",
+          "label": "노랑 벤자리"
+        },
+        {
+          "node_id": "nlk:KSH2004012240",
+          "label": "노랑 잠자리"
+        }
+      ]
+    },
+    {
+      "source_id": "nlk:KSH1998033213",
+      "target_id": "nlk:KSH2004020385",
+      "path_length": 10,
+      "path": [
+        "nlk:KSH1998033213",
+        "nlk:KSH1998032806",
+        "nlk:KSH1998003729",
+        "nlk:KSH1998008355",
+        "nlk:KSH2002037684",
+        "nlk:KSH2003001222",
+        "nlk:KSH2002028183",
+        "nlk:KSH1998000899",
+        "nlk:KSH1998023478",
+        "nlk:KSH1998023481",
+        "nlk:KSH2004020385"
+      ],
+      "path_with_labels": [
+        {
+          "node_id": "nlk:KSH1998033213",
+          "label": "브롬화 산소[--化酸素]"
+        },
+        {
+          "node_id": "nlk:KSH1998032806",
+          "label": "브롬화[--化]"
+        },
+        {
+          "node_id": "nlk:KSH1998003729",
+          "label": "화학 반응[化學反應]"
+        },
+        {
+          "node_id": "nlk:KSH1998008355",
+          "label": "열화학[熱化學]"
+        },
+        {
+          "node_id": "nlk:KSH2002037684",
+          "label": "기후 열역학[氣候熱力學]"
+        },
+        {
+          "node_id": "nlk:KSH2003001222",
+          "label": "기후 지리학[氣候地理學]"
+        },
+        {
+          "node_id": "nlk:KSH2002028183",
+          "label": "아시아 지리[--地理]"
+        },
+        {
+          "node_id": "nlk:KSH1998000899",
+          "label": "아시아 태평양[--太平洋]"
+        },
+        {
+          "node_id": "nlk:KSH1998023478",
+          "label": "남아시아[南--]"
+        },
+        {
+          "node_id": "nlk:KSH1998023481",
+          "label": "방글라데시(국명)[Bangladesh]"
+        },
+        {
+          "node_id": "nlk:KSH2004020385",
+          "label": "파브나주[--州]"
+        }
+      ]
+    },
+    {
+      "source_id": "nlk:KSH2004008117",
+      "target_id": "nlk:KSH1998026117",
+      "path_length": 10,
+      "path": [
+        "nlk:KSH2004008117",
+        "nlk:KSH2004004693",
+        "nlk:KSH2003001382",
+        "nlk:KSH2003003468",
+        "nlk:KSH2003001528",
+        "nlk:KSH2007000085",
+        "nlk:KSH1998034565",
+        "nlk:KSH2000035396",
+        "nlk:KSH1998024941",
+        "nlk:KSH1998013072",
+        "nlk:KSH1998026117"
+      ],
+      "path_with_labels": [
+        {
+          "node_id": "nlk:KSH2004008117",
+          "label": "애기 박각시"
+        },
+        {
+          "node_id": "nlk:KSH2004004693",
+          "label": "박각시과[--科]"
+        },
+        {
+          "node_id": "nlk:KSH2003001382",
+          "label": "나비목[--目]"
+        },
+        {
+          "node_id": "nlk:KSH2003003468",
+          "label": "유시아강[有翅亞綱]"
+        },
+        {
+          "node_id": "nlk:KSH2003001528",
+          "label": "곤충강[昆蟲綱]"
+        },
+        {
+          "node_id": "nlk:KSH2007000085",
+          "label": "곤충 분류학[昆蟲分類學]"
+        },
+        {
+          "node_id": "nlk:KSH1998034565",
+          "label": "분류학[分類學]"
+        },
+        {
+          "node_id": "nlk:KSH2000035396",
+          "label": "분류 체계[分類體系]"
+        },
+        {
+          "node_id": "nlk:KSH1998024941",
+          "label": "용어 체계[用語體系]"
+        },
+        {
+          "node_id": "nlk:KSH1998013072",
+          "label": "시소러스 구축[--構築]"
+        },
+        {
+          "node_id": "nlk:KSH1998026117",
+          "label": "다중어 디스크립터"
+        }
+      ]
+    },
+    {
+      "source_id": "nlk:KSH2004013748",
+      "target_id": "nlk:KSH1998019503",
+      "path_length": 10,
+      "path": [
+        "nlk:KSH2004013748",
+        "nlk:KSH2004013803",
+        "nlk:KSH2003000814",
+        "nlk:KSH1998026170",
+        "nlk:KSH2001002637",
+        "nlk:KSH2001004812",
+        "nlk:KSH2002025856",
+        "nlk:KSH2004022934",
+        "nlk:KSH1998003272",
+        "nlk:KSH1998019505",
+        "nlk:KSH1998019503"
+      ],
+      "path_with_labels": [
+        {
+          "node_id": "nlk:KSH2004013748",
+          "label": "울릉도 수정 달팽이[鬱陵島--]"
+        },
+        {
+          "node_id": "nlk:KSH2004013803",
+          "label": "밤달팽이과[--科]"
+        },
+        {
+          "node_id": "nlk:KSH2003000814",
+          "label": "달팽이과[--科]"
+        },
+        {
+          "node_id": "nlk:KSH1998026170",
+          "label": "식용 달팽이[食用--]"
+        },
+        {
+          "node_id": "nlk:KSH2001002637",
+          "label": "식용[食用]"
+        },
+        {
+          "node_id": "nlk:KSH2001004812",
+          "label": "용도[用途]"
+        },
+        {
+          "node_id": "nlk:KSH2002025856",
+          "label": "가정용[家庭用]"
+        },
+        {
+          "node_id": "nlk:KSH2004022934",
+          "label": "가정용 기기[家庭用機器]"
+        },
+        {
+          "node_id": "nlk:KSH1998003272",
+          "label": "전기 기기[電氣器機]"
+        },
+        {
+          "node_id": "nlk:KSH1998019505",
+          "label": "유도기[誘導機]"
+        },
+        {
+          "node_id": "nlk:KSH1998019503",
+          "label": "교류기[交流機]"
+        }
+      ]
+    },
+    {
+      "source_id": "nlk:KSH2002014517",
+      "target_id": "nlk:KSH2000036767",
+      "path_length": 10,
+      "path": [
+        "nlk:KSH2002014517",
+        "nlk:KSH2002014516",
+        "nlk:KSH2001006447",
+        "nlk:KSH2001016647",
+        "nlk:KSH1998004516",
+        "nlk:KSH1998019837",
+        "nlk:KSH1998019839",
+        "nlk:KSH1998007260",
+        "nlk:KSH2004004308",
+        "nlk:KSH2000036749",
+        "nlk:KSH2000036767"
+      ],
+      "path_with_labels": [
+        {
+          "node_id": "nlk:KSH2002014517",
+          "label": "겹점 2분 음표[--點二分音標]"
+        },
+        {
+          "node_id": "nlk:KSH2002014516",
+          "label": "겹점 음표[--點音標]"
+        },
+        {
+          "node_id": "nlk:KSH2001006447",
+          "label": "음표[音標]"
+        },
+        {
+          "node_id": "nlk:KSH2001016647",
+          "label": "쉼표(음표)[--標]"
+        },
+        {
+          "node_id": "nlk:KSH1998004516",
+          "label": "쉼표(구두점)[--標]"
+        },
+        {
+          "node_id": "nlk:KSH1998019837",
+          "label": "구두법[句讀法]"
+        },
+        {
+          "node_id": "nlk:KSH1998019839",
+          "label": "철자법[綴字法]"
+        },
+        {
+          "node_id": "nlk:KSH1998007260",
+          "label": "용어[用語]"
+        },
+        {
+          "node_id": "nlk:KSH2004004308",
+          "label": "스포츠 용어[--用語]"
+        },
+        {
+          "node_id": "nlk:KSH2000036749",
+          "label": "권투 용어[拳鬪用語]"
+        },
+        {
+          "node_id": "nlk:KSH2000036767",
+          "label": "쇼트 블로[short blow]"
+        }
+      ]
+    },
+    {
+      "source_id": "nlk:KSH1999010953",
+      "target_id": "nlk:KSH2002009626",
+      "path_length": 10,
+      "path": [
+        "nlk:KSH1999010953",
+        "nlk:KSH1999010940",
+        "nlk:KSH1999010591",
+        "nlk:KSH1999010600",
+        "nlk:KSH1998022564",
+        "nlk:KSH1998004373",
+        "nlk:KSH1998036981",
+        "nlk:KSH2005013843",
+        "nlk:KSH2002009438",
+        "nlk:KSH2002009624",
+        "nlk:KSH2002009626"
+      ],
+      "path_with_labels": [
+        {
+          "node_id": "nlk:KSH1999010953",
+          "label": "심리 불개시의 결정[審理不開始--決定]"
+        },
+        {
+          "node_id": "nlk:KSH1999010940",
+          "label": "심리 개시[審理開始]"
+        },
+        {
+          "node_id": "nlk:KSH1999010591",
+          "label": "소송 단계[訴訟段階]"
+        },
+        {
+          "node_id": "nlk:KSH1999010600",
+          "label": "소송 사건[訴訟事件]"
+        },
+        {
+          "node_id": "nlk:KSH1998022564",
+          "label": "분쟁[紛爭]"
+        },
+        {
+          "node_id": "nlk:KSH1998004373",
+          "label": "전쟁[戰爭]"
+        },
+        {
+          "node_id": "nlk:KSH1998036981",
+          "label": "임진 왜란[壬辰倭亂]"
+        },
+        {
+          "node_id": "nlk:KSH2005013843",
+          "label": "안동 유씨 문서[安東柳氏文書]"
+        },
+        {
+          "node_id": "nlk:KSH2002009438",
+          "label": "유(성씨1)[柳]"
+        },
+        {
+          "node_id": "nlk:KSH2002009624",
+          "label": "유(성씨4)[庾]"
+        },
+        {
+          "node_id": "nlk:KSH2002009626",
+          "label": "무송 유씨[茂松庾氏]"
+        }
+      ]
+    },
+    {
+      "source_id": "nlk:KSH2000038522",
+      "target_id": "nlk:KSH1998035117",
+      "path_length": 10,
+      "path": [
+        "nlk:KSH2000038522",
+        "nlk:KSH1998018909",
+        "nlk:KSH1998002406",
+        "nlk:KSH2000006654",
+        "nlk:KSH1999001763",
+        "nlk:KSH1998029308",
+        "nlk:KSH1998000484",
+        "nlk:KSH1998012873",
+        "nlk:KSH1998031550",
+        "nlk:KSH1998027675",
+        "nlk:KSH1998035117"
+      ],
+      "path_with_labels": [
+        {
+          "node_id": "nlk:KSH2000038522",
+          "label": "게양대[揭揚臺]"
+        },
+        {
+          "node_id": "nlk:KSH1998018909",
+          "label": "국기(깃발)[國旗]"
+        },
+        {
+          "node_id": "nlk:KSH1998002406",
+          "label": "국가(나라)[國家]"
+        },
+        {
+          "node_id": "nlk:KSH2000006654",
+          "label": "국가 조약[國家條約]"
+        },
+        {
+          "node_id": "nlk:KSH1999001763",
+          "label": "다자 조약[多者條約]"
+        },
+        {
+          "node_id": "nlk:KSH1998029308",
+          "label": "몬트리올 의정서[--議定書]"
+        },
+        {
+          "node_id": "nlk:KSH1998000484",
+          "label": "프레온 가스[freon gas]"
+        },
+        {
+          "node_id": "nlk:KSH1998012873",
+          "label": "유기 화합물[有機化合物]"
+        },
+        {
+          "node_id": "nlk:KSH1998031550",
+          "label": "유기 황 화합물[有機黃化合物]"
+        },
+        {
+          "node_id": "nlk:KSH1998027675",
+          "label": "유기산 황[有機酸黃]"
+        },
+        {
+          "node_id": "nlk:KSH1998035117",
+          "label": "설핀산"
+        }
+      ]
+    },
+    {
+      "source_id": "nlk:KSH2001009035",
+      "target_id": "nlk:KSH2004020237",
+      "path_length": 10,
+      "path": [
+        "nlk:KSH2001009035",
+        "nlk:KSH2001003032",
+        "nlk:KSH1998022627",
+        "nlk:KSH1998000770",
+        "nlk:KSH2020000229",
+        "nlk:KSH2020000232",
+        "nlk:KSH1998013290",
+        "nlk:KSH1998025621",
+        "nlk:KSH2002029383",
+        "nlk:KSH2004006822",
+        "nlk:KSH2004020237"
+      ],
+      "path_with_labels": [
+        {
+          "node_id": "nlk:KSH2001009035",
+          "label": "청황 색약[靑黃色弱]"
+        },
+        {
+          "node_id": "nlk:KSH2001003032",
+          "label": "색약[色弱]"
+        },
+        {
+          "node_id": "nlk:KSH1998022627",
+          "label": "시각 장애[視覺障碍]"
+        },
+        {
+          "node_id": "nlk:KSH1998000770",
+          "label": "소두증[小頭症]"
+        },
+        {
+          "node_id": "nlk:KSH2020000229",
+          "label": "지카 바이러스[Zika virus]"
+        },
+        {
+          "node_id": "nlk:KSH2020000232",
+          "label": "이집트 숲모기"
+        },
+        {
+          "node_id": "nlk:KSH1998013290",
+          "label": "이집트(국명)[Egypt]"
+        },
+        {
+          "node_id": "nlk:KSH1998025621",
+          "label": "북부 아프리카[北部--]"
+        },
+        {
+          "node_id": "nlk:KSH2002029383",
+          "label": "카나리아 제도[--諸島]"
+        },
+        {
+          "node_id": "nlk:KSH2004006822",
+          "label": "티에라 델 푸에고섬"
+        },
+        {
+          "node_id": "nlk:KSH2004020237",
+          "label": "푼타 아레나스[Punta Arenas]"
+        }
+      ]
+    },
+    {
+      "source_id": "nlk:KSH2002009656",
+      "target_id": "nlk:KSH2001013288",
+      "path_length": 10,
+      "path": [
+        "nlk:KSH2002009656",
+        "nlk:KSH2002009525",
+        "nlk:KSH2002009665",
+        "nlk:KSH2002009464",
+        "nlk:KSH2002009463",
+        "nlk:KSH1998016169",
+        "nlk:KSH1998019035",
+        "nlk:KSH1998002406",
+        "nlk:KSH1998005800",
+        "nlk:KSH1999017940",
+        "nlk:KSH2001013288"
+      ],
+      "path_with_labels": [
+        {
+          "node_id": "nlk:KSH2002009656",
+          "label": "개령 홍씨[開寧洪氏]"
+        },
+        {
+          "node_id": "nlk:KSH2002009525",
+          "label": "홍(성씨)[洪]"
+        },
+        {
+          "node_id": "nlk:KSH2002009665",
+          "label": "개성 홍씨[開城洪氏]"
+        },
+        {
+          "node_id": "nlk:KSH2002009464",
+          "label": "개성 왕씨[開城王氏]"
+        },
+        {
+          "node_id": "nlk:KSH2002009463",
+          "label": "왕(성씨)[王]"
+        },
+        {
+          "node_id": "nlk:KSH1998016169",
+          "label": "왕(국왕)[王]"
+        },
+        {
+          "node_id": "nlk:KSH1998019035",
+          "label": "국가 원수[國家元首]"
+        },
+        {
+          "node_id": "nlk:KSH1998002406",
+          "label": "국가(나라)[國家]"
+        },
+        {
+          "node_id": "nlk:KSH1998005800",
+          "label": "신앙[信仰]"
+        },
+        {
+          "node_id": "nlk:KSH1999017940",
+          "label": "기자 신앙[祈子信仰]"
+        },
+        {
+          "node_id": "nlk:KSH2001013288",
+          "label": "기자 풍속[祈子風俗]"
+        }
+      ]
+    }
+  ]
+}

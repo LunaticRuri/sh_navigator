@@ -1,0 +1,222 @@
+Processing 7656 communities...
+Total important nodes selected: 29365
+Communities processed: 7656
+Results saved to: /Users/nuriseok/sh_navigator/subject_headings_graph/important_nodes_analysis/results/important_nodes_by_community.csv
+
+=== Community Statistics ===
+Top 10 largest communities:
+           total_nodes  selected_nodes  avg_degree  max_degree  min_degree
+community                                                                 
+749                894              90       44.44          74          33
+366                453              46       37.04          66          26
+2817               423              43       35.93          83          26
+5667               422              43       52.93          98          40
+8928               418              42       25.48          41          20
+473                306              31       49.26          84          39
+583                302              31       27.42          51          21
+438                299              30       24.77          44          19
+839                298              30       31.47          60          23
+885                298              30       38.07          80          24
+
+Overall statistics:
+- Total communities: 7656
+- Average community size: 33.6
+- Largest community size: 894
+- Smallest community size: 10
+- Total important nodes: 29365
+
+=== Selected Node Count Distribution ===
+Distribution of selected nodes per community:
+Selected Nodes | Communities | Percentage
+------------------------------------------
+           1 |         381 |     4.98% (cumulative: 4.98%)
+           2 |        2992 |    39.08% (cumulative: 44.06%)
+           3 |        1648 |    21.53% (cumulative: 65.58%)
+           4 |         940 |    12.28% (cumulative: 77.86%)
+           5 |         517 |     6.75% (cumulative: 84.61%)
+           6 |         306 |     4.00% (cumulative: 88.61%)
+           7 |         207 |     2.70% (cumulative: 91.31%)
+           8 |         167 |     2.18% (cumulative: 93.50%)
+           9 |         119 |     1.55% (cumulative: 95.05%)
+          10 |          64 |     0.84% (cumulative: 95.89%)
+          11 |          45 |     0.59% (cumulative: 96.47%)
+          12 |          35 |     0.46% (cumulative: 96.93%)
+          13 |          30 |     0.39% (cumulative: 97.32%)
+          14 |          31 |     0.40% (cumulative: 97.73%)
+          15 |          25 |     0.33% (cumulative: 98.05%)
+          16 |          23 |     0.30% (cumulative: 98.35%)
+          17 |          16 |     0.21% (cumulative: 98.56%)
+          18 |          21 |     0.27% (cumulative: 98.84%)
+          19 |          13 |     0.17% (cumulative: 99.01%)
+          20 |           6 |     0.08% (cumulative: 99.09%)
+          21 |           7 |     0.09% (cumulative: 99.18%)
+          22 |           8 |     0.10% (cumulative: 99.28%)
+          23 |           7 |     0.09% (cumulative: 99.37%)
+          24 |          12 |     0.16% (cumulative: 99.53%)
+          25 |           9 |     0.12% (cumulative: 99.65%)
+          26 |           5 |     0.07% (cumulative: 99.71%)
+          27 |           5 |     0.07% (cumulative: 99.78%)
+          28 |           3 |     0.04% (cumulative: 99.82%)
+          29 |           2 |     0.03% (cumulative: 99.84%)
+          30 |           5 |     0.07% (cumulative: 99.91%)
+          31 |           2 |     0.03% (cumulative: 99.93%)
+          42 |           1 |     0.01% (cumulative: 99.95%)
+          43 |           2 |     0.03% (cumulative: 99.97%)
+          46 |           1 |     0.01% (cumulative: 99.99%)
+          90 |           1 |     0.01% (cumulative: 100.00%)
+
+Summary Statistics:
+- Mean selected nodes per community: 3.84
+- Median selected nodes per community: 3.00
+- Min selected nodes per community: 1
+- Max selected nodes per community: 90
+- Standard deviation: 3.59
+
+Distribution by ranges:
+- Communities with 1 node: 381 (5.0%)
+- Communities with 2-5 nodes: 6097 (79.6%)
+- Communities with 6-10 nodes: 863 (11.3%)
+- Communities with 11-20 nodes: 245 (3.2%)
+- Communities with 21+ nodes: 70 (0.9%)
+
+=== Distance Analysis Results ===
+Important nodes count: 29365
+Total nodes in network: 257541
+Graph built with 3354863 edges
+
+Sample size: 500
+Reachable nodes: 500
+Unreachable nodes (within 5 steps): 0
+Reachability rate: 100.00%
+
+Distance Statistics:
+- Mean distance: 1.02
+- Median distance: 1.00
+- Min distance: 0
+- Max distance: 2
+- Standard deviation: 0.54
+
+Distance Distribution:
+- Distance 0: 68 nodes (13.6%)
+- Distance 1: 355 nodes (71.0%)
+- Distance 2: 77 nodes (15.4%)
+
+=== Finding Connected Important Node Pairs ===
+Important nodes count: 29365
+Searching for connections between important nodes...
+
+=== Connection Analysis Results ===
+Total connected pairs: 117823
+
+Connection types distribution:
+- cosine_related: 103126 pairs (87.5%)
+- related: 7608 pairs (6.5%)
+- narrower: 4452 pairs (3.8%)
+- broader: 2637 pairs (2.2%)
+
+Community connection distribution:
+- Same community: 41407 pairs (35.1%)
+- Inter-community: 76416 pairs (64.9%)
+
+Most connected important nodes:
+ 1. 교육[敎育] (Community: 1869) - 126 connections
+ 2. (기타 플라스틱 제품용 기계 조작원)[其他--製品用機械操作員] (Community: 8342) - 122 connections
+ 3. 장비 조작원[裝備操作員] (Community: 8283) - 97 connections
+ 4. 금속 인형 제조기 조작원[金屬人形製造機操作員] (Community: 8342) - 95 connections
+ 5. 화장품 생산기 조작원[化粧品生産機操作員] (Community: 8342) - 91 connections
+ 6. 생물학[生物學] (Community: 1054) - 90 connections
+ 7. 약제품 생산기 조작원[藥製品生産機操作員] (Community: 8342) - 90 connections
+ 8. (그외 기타 섬유, 모피 및 가죽 제품용 기계 조작원)[--其他纖維毛皮--製品用機械操作員] (Community: 8323) - 90 connections
+ 9. 포장기 조작원[包裝機操作員] (Community: 8370) - 89 connections
+10. 화물 운송[貨物運送] (Community: 3514) - 88 connections
+
+Top connections by relation type:
+
+BROADER (2637 pairs):
+  1. 힘 단위[--單位] ↔ 단위(도량형)[單位] 🏠
+  2. 넓이 단위[--單位] ↔ 단위(도량형)[單位] 🏠
+  3. 장거리 달리기[長距離--] ↔ 달리기 🏠
+
+NARROWER (4452 pairs):
+  1. 암모늄[ammonium] ↔ 질산 암모늄[窒酸--] 🏠
+  2. 단청[丹靑] ↔ 칠보 단청[七寶丹靑] 🏠
+  3. 분산 처리[分散處理] ↔ 병렬 기계[竝列機械] 🏠
+
+RELATED (7608 pairs):
+  1. 뉴스[news] ↔ 언론[言論] 🏠
+  2. 주소(컴퓨터)[住所] ↔ 주소 변환[住所變換] 🏠
+  3. 주소(컴퓨터)[住所] ↔ 주소 지정 방식[住所指定方式] 🏠
+
+COSINE_RELATED (103126 pairs):
+  1. 일원론[一元論] ↔ 다원론[多元論] 🏠
+  2. 일원론[一元論] ↔ 의식 일원론[意識一元論] 🏠
+  3. 일원론[一元論] ↔ 존재론적 일원론[存在論的一元論] 🏠
+
+=== Connection Pattern Analysis ===
+
+Top bridge nodes (connecting multiple communities):
+ 1. 교육[敎育] (Community: 1869) - connects to 71 other communities
+ 2. 국가(나라)[國家] (Community: 1516) - connects to 64 other communities
+ 3. 전쟁[戰爭] (Community: 920) - connects to 55 other communities
+ 4. (기타 플라스틱 제품용 기계 조작원)[其他--製品用機械操作員] (Community: 8342) - connects to 51 other communities
+ 5. 장비 조작원[裝備操作員] (Community: 8283) - connects to 50 other communities
+ 6. (기계 조작원 및 관련 종사자)[機械操作員--關聯從事者] (Community: 8304) - connects to 48 other communities
+ 7. 사회(공동체)[社會] (Community: 2089) - connects to 47 other communities
+ 8. 무역(거래)[貿易] (Community: 2196) - connects to 47 other communities
+ 9. (고무 및 플라스틱 제품용 기계 조작 종사자)[--製品用機械操作從事者] (Community: 8342) - connects to 46 other communities
+10. 농업[農業] (Community: 3824) - connects to 45 other communities
+
+=== Creating Balanced Node Pairs Sample (100,000 pairs) ===
+Total important nodes: 29,365
+Connected pairs: 117,823
+Added 117,823 connected pairs
+Need to sample -17,823 unconnected pairs
+Connected pairs already exceed target sample size. Using only connected pairs.
+
+=== Sample Dataset Analysis ===
+Total sample size: 100,000
+Connected pairs: 100,000 (100.0%)
+Unconnected pairs: 0 (0.0%)
+
+Community distribution:
+Same community pairs: 40,201 (40.2%)
+Inter-community pairs: 59,799 (59.8%)
+
+Relation types in connected pairs:
+- cosine_related: 97,363 pairs (97.4%)
+- broader: 2,637 pairs (2.6%)
+
+Sample examples:
+Connected pairs:
+  1. 힘 단위[--單位] ↔ 단위(도량형)[單位] (broader) 🏠
+  2. 넓이 단위[--單位] ↔ 단위(도량형)[單位] (broader) 🏠
+  3. 장거리 달리기[長距離--] ↔ 달리기 (broader) 🏠
+Unconnected pairs:
+
+=== Sample Results ===
+Top 5 communities by size with their important nodes:
+
+Community 749 (total nodes: 894):
+  - Rank 1: 도시 정책[都市政策] (degree: 74)
+  - Rank 2: 도시 건설 계획[都市建設計劃] (degree: 72)
+  - Rank 3: 지역 개발[地域開發] (degree: 70)
+
+Community 366 (total nodes: 453):
+  - Rank 1: 언론 보도[言論報道] (degree: 66)
+  - Rank 2: 보도(언론)[報道] (degree: 64)
+  - Rank 3: 보도 매체[報道媒體] (degree: 60)
+
+Community 2817 (total nodes: 423):
+  - Rank 1: 측량[測量] (degree: 83)
+  - Rank 2: 계기(계측기)[計器] (degree: 53)
+  - Rank 3: 계측 기기[計測機器] (degree: 51)
+
+Community 5667 (total nodes: 422):
+  - Rank 1: 정권(정치권력)[政權] (degree: 98)
+  - Rank 2: 집권[執權] (degree: 87)
+  - Rank 3: 통치 세력[統治勢力] (degree: 84)
+
+Community 8928 (total nodes: 418):
+  - Rank 1: 감지 센서[感知--] (degree: 41)
+  - Rank 2: 감각 상실[感覺喪失] (degree: 40)
+  - Rank 3: 몽상[夢想] (degree: 33)
