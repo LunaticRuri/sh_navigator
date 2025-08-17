@@ -146,8 +146,18 @@ export class ChatbotModule {
         messageDiv.appendChild(timeDiv);
         messagesContainer.appendChild(messageDiv);
         
-        // Scroll to bottom after adding message
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        // Render math equations for bot messages
+        if (role === 'bot' && window.MathJax) {
+            MathJax.typesetPromise([contentDiv]).then(() => {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }).catch((err) => {
+                console.log('MathJax rendering error:', err);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            });
+        } else {
+            // Scroll to bottom after adding message
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
     }
 
     /**
@@ -199,7 +209,7 @@ export class ChatbotModule {
                 messagesContainer.innerHTML = `
                     <div class="message bot-message">
                         <div class="message-content">
-                            안녕하세요! 도서관과 주제명표목에 대한 질문이 있으시면 언제든 물어보세요. 📚
+                            안녕하세요! 
                         </div>
                         <div class="message-time">${formatTime()}</div>
                     </div>
