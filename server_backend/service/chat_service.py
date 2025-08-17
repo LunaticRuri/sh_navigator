@@ -65,7 +65,7 @@ class ChatService:
 
             # TODO: 여기에 메인 로직 추가해야 함!
             
-            needs : UserNeedsAnalysis = analyze_user_needs(client=self.model, user_input=chat_message.content)
+            needs : UserNeedsAnalysis = await analyze_user_needs(client=self.model, user_input=chat_message.content)
             if not needs.needs_exist:
                 ...
             

@@ -31,9 +31,6 @@ MODEL_SERVER_URL = "http://127.0.0.1:8001"
 # Network Interaction Server Configuration
 NETWORK_SERVER_URL = "http://127.0.0.1:8002"
 
-# Database Server Configuration
-DB_SERVER_URL = "http://127.0.0.1:8003"
-
 # Gemini API Configuration
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODEL = "gemini-2.5-flash"
