@@ -1773,6 +1773,54 @@ body {
   font-style: italic;
 }
 
+/* 참조 링크 스타일 */
+.message-content .reference-link {
+  display: inline-block;
+  padding: 2px 8px;
+  margin: 0 2px;
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  border-radius: 12px;
+  font-size: 0.85em;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.2s ease;
+}
+
+.message-content .reference-link:hover {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.message-content .reference-link:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* 주제 참조 링크 */
+.message-content .reference-link.subject-link {
+  border-color: rgba(102, 187, 106, 0.5);
+}
+
+.message-content .reference-link.subject-link:hover {
+  background: rgba(102, 187, 106, 0.2);
+  border-color: rgba(102, 187, 106, 0.7);
+}
+
+/* 도서 참조 링크 */
+.message-content .reference-link.book-link {
+  border-color: rgba(255, 193, 7, 0.5);
+}
+
+.message-content .reference-link.book-link:hover {
+  background: rgba(255, 193, 7, 0.2);
+  border-color: rgba(255, 193, 7, 0.7);
+}
+
 /* 사용자 메시지는 기본 스타일 유지 */
 .user-message .message-content {
     background: #e3f2fd;
