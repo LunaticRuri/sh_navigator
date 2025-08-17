@@ -1,51 +1,50 @@
 from core.config import GEMINI_API_KEY, GEMINI_MODEL, MAX_QUERY_LENGTH, MODEL_SERVER_URL, NETWORK_SERVER_URL
-from schemas.chat import UserNeeds,UserNeedsAnalysis
+from schemas.search import BookResponse, SubjectResponse
+from schemas.chat import UserNeeds,UserNeedsAnalysis, ResourcesFromNeeds
 from core.utils import truncate_string
+from database.database_manager import get_database_manager
 import httpx
+import json
 from typing import List
-from google import genai
+import logging
 import google.generativeai as genai
-from google.genai import types
+from google.generativeai.protos import Schema, Type
+
+logger = logging.getLogger(__name__)
+
 
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel(GEMINI_MODEL)
 
-user_needs_analyze_config = types.GenerateContentConfig(
+user_needs_analysis_config = genai.GenerationConfig(
     response_mime_type="application/json",
-    system_instruction = (
-        "너는 이용자의 입력을 받아 정보 요구를 추출하는 일을 한다.\n"
-        "일은 다음의 순서에 따라 처리하자.\n"
-        "1. 우선 입력에 명시적, 암시적으로 드러나는 정보요구가 있으면 needs_exist가 true, 없으면 false이다.\n"
-        "2. 만약 needs_exist가 False이면, 여기서 일을 종료하면 됨. (즉 needs 는 비워둬야 함)\n"
-        "3. 만약 needs_exist가 true이면, 사용자의 입력에서 알 수 있는 모든 정보 요구를 파악하자. 정보요구는 여러개 있을 수 있음.\n"
-        "4. 파악된 정보요구들을 RDF 트리플(subject, predicate, object)로 나타내자.\n"
-        "5. 그 정보요구를 해결하기 위해 필요한 내용이 뭔지를 생각해두자.\n" 
-        "6. 필요한 내용에 관련된 '책'이나 '주제명 표목'을 찾는 데에 도움이 될만한 키워드(단어 또는 구)를 최소한 3개 이상 keywords에 나타내자."
-    ),
-    response_schema=genai.types.Schema(
-        type = genai.types.Type.OBJECT,
+    response_schema=Schema(
+        type = Type.OBJECT,
         required = ["needs_exist"],
         properties = {
-            "needs_exist": genai.types.Schema(
-                type = genai.types.Type.BOOLEAN,
+            "needs_exist": Schema(
+                type = Type.BOOLEAN,
             ),
-            "needs": genai.types.Schema(
-                type = genai.types.Type.ARRAY,
-                items = genai.types.Schema(
-                    type = genai.types.Type.OBJECT,
+            "needs": Schema(
+                type = Type.ARRAY,
+                items = Schema(
+                    type = Type.OBJECT,
                     required = ["subject", "predicate", "object", "keywords"],
                     properties = {
-                        "subject": genai.types.Schema(
-                            type = genai.types.Type.STRING,
+                        "subject": Schema(
+                            type = Type.STRING,
                         ),
-                        "predicate": genai.types.Schema(
-                            type = genai.types.Type.STRING,
+                        "predicate": Schema(
+                            type = Type.STRING,
                         ),
-                        "object": genai.types.Schema(
-                            type = genai.types.Type.STRING,
+                        "object": Schema(
+                            type = Type.STRING,
                         ),
-                        "keywords": genai.types.Schema(
-                            type = genai.types.Type.STRING,
+                        "keywords": Schema(
+                            type = Type.ARRAY,
+                            items = Schema(
+                                type = Type.STRING,
+                            ),
+                            min_items=4  # Ensure at least 4 keywords are provided
                         ),
                     },
                 ),
@@ -54,19 +53,125 @@ user_needs_analyze_config = types.GenerateContentConfig(
     ),
 )
 
+user_needs_analysis_system_instruction = (
+        "너는 이용자의 입력을 받아 정보 요구를 추출하는 일을 한다.\n"
+        "일은 다음의 순서에 따라 처리하자.\n"
+        "1. 우선 입력에 명시적, 암시적으로 드러나는 정보요구가 있으면 needs_exist가 true, 없으면 false이다.\n"
+        "2. 만약 needs_exist가 False이면, 여기서 일을 종료하면 됨. (즉 needs 는 비워둬야 함)\n"
+        "3. 만약 needs_exist가 true이면, 사용자의 입력에서 알 수 있는 모든 정보 요구를 파악하자. 정보요구는 여러개 있을 수 있음.\n"
+        "4. 파악된 정보요구들을 RDF 트리플(subject, predicate, object)로 나타내자.\n"
+        "5. 그 정보요구를 해결하기 위해 필요한 내용이 뭔지를 생각해두자.\n" 
+        "6. 필요한 내용에 관련된 '책'이나 '주제명 표목'을 찾는 데에 도움이 될만한 키워드(단어 또는 구)를 최소한 3개 이상 keywords에 나타내자."
+    )
+
+user_needs_analysis_model = genai.GenerativeModel(
+    GEMINI_MODEL,
+    system_instruction=user_needs_analysis_system_instruction
+)
+
+def _row_to_book_response(row) -> BookResponse:
+    return BookResponse(
+        isbn=row["isbn"],
+        title=row["title"],
+        kdc=row["kdc"],
+        publication_year=row["publication_year"],
+        intro=row["intro"],
+        toc=row["toc"],
+        nlk_subjects=row["nlk_subjects"]
+    )
+
+def _row_to_subject_response(row) -> SubjectResponse:
+    return SubjectResponse(
+        node_id=row["node_id"],
+        label=row["label"],
+        definition=row["definition"]
+    )
+
+async def _find_book_candidates_by_needs(keywords_str : str) -> List[BookResponse]:
+    http_client = httpx.AsyncClient(timeout=10.0)
+
+    query = truncate_string(keywords_str, MAX_QUERY_LENGTH)
+    
+    response = await http_client.post(
+        f"{MODEL_SERVER_URL}/search/books",
+        json={"query": query, "limit": 10}
+    )
+    response.raise_for_status()
+    search_data = response.json()
+    retrieved_isbns = search_data.get("retrieved_isbns", [])
+    
+    db_manager = get_database_manager()
+    async with db_manager.get_connection() as conn:
+        cursor = await conn.cursor()
+        
+        query = """
+            SELECT isbn, title, kdc, publication_year, intro, toc, nlk_subjects 
+            FROM books 
+            WHERE isbn IN ({})
+            LIMIT ?
+        """.format(','.join('?' for _ in retrieved_isbns))
+        
+        await cursor.execute(query, (*retrieved_isbns, 10))
+        books_data = await cursor.fetchall()
+        
+    # Sort results to match FAISS order
+    books_data = sorted(
+        books_data, 
+        key=lambda x: retrieved_isbns.index(x[0])
+    )
+
+    # Convert DB rows to response models
+    books = [_row_to_book_response(row) for row in books_data]
+        
+    return books
+
+async def _find_subject_candidates_by_needs(query) -> List[SubjectResponse]:
+    
+    http_client = httpx.AsyncClient(timeout=10.0)
+    db_manager = get_database_manager()
+    
+    # Get subject-related subjects
+    response = await http_client.post(
+        f"{MODEL_SERVER_URL}/search/subjects",
+        json={"query": query, "limit": 10}
+    )
+    response.raise_for_status()
+    search_data = response.json()
+    retrieved_node_ids = search_data.get("retrieved_node_ids", [])
+
+    
+    async with db_manager.get_connection() as conn:
+        cursor = await conn.cursor()
+        
+        query = """
+            SELECT node_id, label, definition 
+            FROM subjects 
+            WHERE node_id IN ({})
+            LIMIT ?
+        """.format(','.join('?' for _ in retrieved_node_ids))
+        await cursor.execute(query, (*retrieved_node_ids, 10))
+        
+        subjects_data = await cursor.fetchall()
+    
+    # Sort results to match FAISS order
+    subjects_data = sorted(
+        subjects_data, 
+        key=lambda x: retrieved_node_ids.index(x[0])
+    )
+
+    subjects = [_row_to_subject_response(row) for row in subjects_data]
+    return subjects
 
 async def analyze_user_needs(user_input: str) -> UserNeedsAnalysis:
 
     contents = [user_input]
     try:
-        response = await model.generate_content_async(
-            model=GEMINI_MODEL,
+        response = await user_needs_analysis_model.generate_content_async(
             contents=contents,
-            config=user_needs_analyze_config
+            generation_config=user_needs_analysis_config
         )
-        
-        response_data = response.text
-        response_json = response_data.json()
+        logger.info(f"Response from Gemini: {response.text}")
+        response_json = json.loads(response.text)
         
         needs_exist = response_json.get("needs_exist", False)
         needs = response_json.get("needs", [])
@@ -89,56 +194,28 @@ async def analyze_user_needs(user_input: str) -> UserNeedsAnalysis:
             )
     except Exception as e:
         raise RuntimeError(f"Failed to generate content: {e}")
-
-async def find_book_candidates_by_needs(keywords_str : str) -> List[str]:
-    http_client = httpx.AsyncClient(timeout=10.0)
-
-    query = truncate_string(keywords_str, MAX_QUERY_LENGTH)
     
-    response = await http_client.post(
-        f"{MODEL_SERVER_URL}/search/books",
-        json={"query": query, "limit": 10}
-    )
-    response.raise_for_status()
-    search_data = response.json()
-    retrieved_isbns = search_data.get("retrieved_isbns", [])
+async def find_resources_from_needs(user_needs: UserNeeds) -> ResourcesFromNeeds:
     
-    with 
+    book_candidates = []
+    sub_subject_candidates = []
+    obj_subject_candidates = []
 
-async def find_subject_candidates_by_needs(subject_:str, object_:str) -> List[str]:
-    http_client = httpx.AsyncClient(timeout=10.0)
-
-    # Get subject-related subjects
-    response = await http_client.post(
-        f"{MODEL_SERVER_URL}/search/subjects",
-        json={"query": subject_, "limit": 10}
-    )
-    response.raise_for_status()
-    search_data = response.json()
-    subject_retrieved_node_ids = search_data.get("retrieved_node_ids", [])
     
-    response = await http_client.post(
-        f"{NETWORK_SERVER_URL}/nodes/info",
-        json={"node_ids": subject_retrieved_node_ids}
-    )
-    response.raise_for_status()
-    subject_nodes = response.json().get("nodes", [])
+    keywords_str = ', '.join(user_needs.keywords)
+    book_candidates.extend(await _find_book_candidates_by_needs(keywords_str))
+    sub_subject_candidates.extend(await _find_subject_candidates_by_needs(user_needs.subject_))
+    obj_subject_candidates.extend(await _find_subject_candidates_by_needs(user_needs.object_))
+    
+    return ResourcesFromNeeds(
+        books=book_candidates,
+        sub_subjects=sub_subject_candidates,
+        obj_subjects=obj_subject_candidates
+    )      
 
-    # Get object-related subjects
-    response = await http_client.post(
-        f"{MODEL_SERVER_URL}/search/subjects",
-        json={"query": object_, "limit": 10}
-    )
-    response.raise_for_status()
-    search_data = response.json()
-    object_retrieved_node_ids = search_data.get("retrieved_node_ids", [])
+async def filter_resources():
+    ... # Implement filtering logic if needed
 
-    response = await http_client.post(
-        f"{NETWORK_SERVER_URL}/nodes/info",
-        json={"node_ids": object_retrieved_node_ids}
-    )
-    response.raise_for_status()
-    object_nodes = response.json().get("nodes", [])
 
 if __name__ == "__main__":
     user_input = "나는 서울의 역사에 대해 알고 싶어."

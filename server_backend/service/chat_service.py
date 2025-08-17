@@ -6,10 +6,11 @@ from fastapi import HTTPException
 
 import google.generativeai as genai
 
-from schemas.chat import ChatMessage, ChatResponse, UserNeeds, UserNeedsAnalysis
-from chatbot.chat_pipeline import analyze_user_needs
+from schemas.chat import ChatMessage, ChatResponse, UserNeeds, UserNeedsAnalysis, ResourcesFromNeeds
+from chatbot.chat_pipeline import analyze_user_needs, find_resources_from_needs
 from chatbot.chat_manager import chat_session_manager
-from core.utils import format_gemini_chat_history, get_system_prompt
+from chatbot.chat_utils import get_system_prompt
+from core.utils import format_gemini_chat_history
 from core.config import GEMINI_API_KEY, GEMINI_MODEL
 
 logger = logging.getLogger(__name__)
@@ -25,10 +26,9 @@ class ChatService:
         """
         self.model = None
         self.is_available = False
-        
+
         if GEMINI_API_KEY:
             try:
-                # Configure Gemini API with provided key
                 genai.configure(api_key=GEMINI_API_KEY)
                 self.model = genai.GenerativeModel(GEMINI_MODEL)
                 self.is_available = True
@@ -43,46 +43,49 @@ class ChatService:
     async def chat(self, chat_message: ChatMessage) -> ChatResponse:
         """
         Process a chat message and generate a response.
-        
-        Args:
-            chat_message: User's chat message
-            
-        Returns:
-            ChatResponse with bot's reply
         """
         if not self.is_available:
-            # Service unavailable if API key is missing
             raise HTTPException(
-                status_code=503, 
+                status_code=503,
                 detail="챗봇 서비스를 사용할 수 없습니다. API 키가 설정되지 않았습니다."
             )
         try:
-            # Get or create session for the user
             session_id = chat_session_manager.get_or_create_session(chat_message.session_id)
-            
-            # Retrieve conversation history for the session
             history = chat_session_manager.get_session_history(session_id)
 
-            # TODO: 여기에 메인 로직 추가해야 함!
+            needs_analysis: UserNeedsAnalysis = await analyze_user_needs(chat_message.content)
+            if not needs_analysis.needs_exist:
+                response_text = await self._generate_response(chat_message.content, history)
+                chat_session_manager.add_message_to_session(session_id, 'user', chat_message.content)
+                chat_session_manager.add_message_to_session(session_id, 'assistant', response_text)
+                return ChatResponse(response=response_text, session_id=session_id)
+
+            for need in needs_analysis.needs:
+                resource_from_needs: ResourcesFromNeeds = await find_resources_from_needs(need)
+                logger.info(need)
+                logger.info(resource_from_needs)
             
-            needs : UserNeedsAnalysis = await analyze_user_needs(client=self.model, user_input=chat_message.content)
-            if not needs.needs_exist:
-                ...
+            #TODO: 임시 생성이라서 나중에 제대로 로직 짜서 고쳐야 함.
+            # Generate response based on user needs
+            needs_analysis_text = str(needs_analysis)
+            resources_text = str(resource_from_needs)
+
+            enhanced_content = (
+                f"{chat_message.content}\n"
+                f"아래는 사용자 요구 분석 결과와 그에 따른 관련 책과 주제명 표목이다. 이를 활용하여 사용자의 정보요구를 해결하고, 지적 탐험을 도와라.\n"
+                f"요구분석 내용: {resources_text}\n"
+                f"관련 책과 주제명 표목: {needs_analysis_text}\n"
+            ) 
             
-            # Generate response using Gemini API
-            response_text = await self._generate_response(chat_message.content, history)
             
-            # Save user and assistant messages to session history
-            chat_session_manager.add_message_to_session(session_id, 'user', chat_message.content)
+            response_text = await self._generate_response(enhanced_content, history)
+            chat_session_manager.add_message_to_session(session_id, 'user', enhanced_content)
             chat_session_manager.add_message_to_session(session_id, 'assistant', response_text)
-            
             return ChatResponse(response=response_text, session_id=session_id)
-            
+
         except Exception as e:
             logger.error(f"Chat response generation error: {e}")
             session_id = chat_session_manager.get_or_create_session(chat_message.session_id)
-            
-            # Return error response if generation fails
             return ChatResponse(
                 response="죄송합니다. 현재 응답을 생성할 수 없습니다. 잠시 후 다시 시도해주세요.",
                 session_id=session_id,
@@ -92,55 +95,31 @@ class ChatService:
     async def _generate_response(self, message: str, history: List[Dict]) -> str:
         """
         Generate a response using Gemini API.
-        
-        Args:
-            message: User's message
-            history: Conversation history
-            
-        Returns:
-            Generated response text
         """
         try:
-            # Format history for Gemini API input
             chat_history = format_gemini_chat_history(history)
-            
-            # If no history, start with system prompt and greeting
             if not chat_history:
                 system_prompt = get_system_prompt()
                 chat_history = [
                     {
                         'role': 'user',
-                        'parts': ['안녕하세요! 도서관 관련 질문이 있습니다.']
+                        'parts': [
+                            '안녕! 나는 도서관의 책과 주제명 표목을 통해 지적 탐색을 수행하고 싶은 사용자야.'
+                        ]
                     },
                     {
                         'role': 'model',
-                        'parts': [system_prompt + '\n\n안녕하세요! 도서관과 주제명표목에 대한 질문이 있으시면 언제든 물어보세요.']
+                        'parts': [
+                            system_prompt + '\n\n안녕하세요! 도서관과 주제명표목에 대한 질문이 있으시면 언제든 물어보세요.'
+                        ]
                     }
                 ]
             
-            # Generate response using chat session if history exists
-            if chat_history:
-                chat = self.model.start_chat(history=chat_history)
-                response = await asyncio.to_thread(chat.send_message, message)
-            else:
-                # For new conversation, use a full prompt
-                full_prompt = f"""당신은 도서관과 주제명표목에 대한 전문 지식을 가진 AI 어시스턴트입니다. 
-다음 역할을 수행합니다:
+            chat = self.model.start_chat(history=chat_history)
+            response = await asyncio.to_thread(chat.send_message, message)
 
-1. 도서 검색 및 추천에 대한 도움
-2. 주제명표목(Subject Headings) 시스템에 대한 설명
-3. 한국십진분류법(KDC)에 대한 정보 제공
-4. 도서관 이용 방법 안내
-5. 일반적인 질문에 대한 친근하고 도움이 되는 답변
-
-사용자의 질문에 정확하고 친절하게 답변해주세요.
-
-사용자 질문: {message}"""
-                
-                response = await asyncio.to_thread(self.model.generate_content, full_prompt)
-            
             return response.text
-            
+
         except Exception as e:
             logger.error(f"Error generating Gemini response: {e}")
             raise e
@@ -148,34 +127,23 @@ class ChatService:
     def get_status(self) -> Dict[str, str]:
         """
         Get chatbot service status.
-        
-        Returns:
-            Status dictionary
         """
         if self.is_available:
             return {
-                "status": "active", 
+                "status": "active",
                 "message": "챗봇 서비스가 활성화되어 있습니다."
             }
         else:
             return {
-                "status": "inactive", 
+                "status": "inactive",
                 "message": "챗봇 서비스가 비활성화되어 있습니다. API 키를 확인해주세요."
             }
 
     def get_session_info(self, session_id: str) -> Dict:
         """
         Get information about a specific chat session.
-        
-        Args:
-            session_id: Session identifier
-            
-        Returns:
-            Session information dictionary
         """
         history = chat_session_manager.get_session_history(session_id)
-        
-        # Only include user and assistant messages in the output
         return {
             "session_id": session_id,
             "messages": [msg for msg in history if msg['role'] in ['user', 'assistant']],
@@ -185,35 +153,22 @@ class ChatService:
     def clear_session(self, session_id: str) -> bool:
         """
         Clear a specific chat session.
-        
-        Args:
-            session_id: Session identifier
-            
-        Returns:
-            True if session was cleared, False if not found
         """
         return chat_session_manager.delete_session(session_id)
 
     def create_new_session(self) -> str:
         """
         Create a new chat session.
-        
-        Returns:
-            New session ID
         """
         return chat_session_manager.get_or_create_session()
 
     def get_session_stats(self) -> Dict:
         """
         Get statistics about all chat sessions.
-        
-        Returns:
-            Session statistics dictionary
         """
         return chat_session_manager.get_session_stats()
 
 
-# Global chat service instance
 chat_service = ChatService()
 
 
@@ -223,4 +178,4 @@ def get_chat_service() -> ChatService:
     FastAPI dependency for providing the chat service instance.
     Returns the global chat_service instance.
     """
-    return chat_service  # Use the global instance
+    return chat_service

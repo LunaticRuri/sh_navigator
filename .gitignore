@@ -17,6 +17,9 @@ backup/
 # Ignore CSV files
 *.csv
 
+# Ignore zip files
+*.zip
+
 # Ignore Documentation files
 docs/
 

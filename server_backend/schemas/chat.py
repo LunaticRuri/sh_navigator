@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field, validator
 from typing import List, Dict, Optional
 from datetime import datetime
 from core.config import SESSION_TIMEOUT
+from schemas.search import BookResponse, SubjectResponse
 
 
 class ChatMessage(BaseModel):
@@ -97,3 +98,8 @@ class UserNeedsAnalysis(BaseModel):
     """Model for user needs analysis response"""
     needs_exist: bool = Field(..., description="Indicates if user needs exist")
     needs: Optional[List[UserNeeds]] = Field(..., description="List of user needs extracted from input")
+
+class ResourcesFromNeeds(BaseModel):
+    books: List[BookResponse] = Field(..., description="List of book candidates based on user needs")
+    sub_subjects: List[SubjectResponse] = Field(..., description="List of subject candidates based on user needs")
+    obj_subjects: List[SubjectResponse] = Field(..., description="List of object candidates based on user needs")
