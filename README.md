@@ -11,3 +11,5 @@
    - <http://146.190.98.230:8000/docs> (Main)
    - <http://146.190.98.230:8001/docs> (Embedding Model + FAISS)
    - <http://146.190.98.230:8002/docs> (Network)
+4. 데이터베이스 파일 (20250818)
+   - <https://drive.google.com/file/d/10H14fyKhgbodSJ65vOD3Xv3VIvqA0Vyg/view?usp=share_link>
