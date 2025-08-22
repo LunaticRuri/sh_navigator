@@ -46,6 +46,10 @@ DB_CONNECTION_TIMEOUT = 30
 # Chat Session Configuration
 SESSION_TIMEOUT = 1800  # 30 minutes in seconds
 
+# Redis Configuration
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+REDIS_SESSION_PREFIX = "sh_navigator:chat_session:"
+
 # CORS Configuration
 CORS_ORIGINS = ["*"]  # Change to specific domains in production
 

@@ -1,0 +1,12 @@
+/* 메인 CSS - 모든 분할된 CSS 파일을 import */
+@import url('variables.css');
+@import url('base.css');
+@import url('layout.css');
+@import url('search.css');
+@import url('results.css');
+@import url('modal.css');
+@import url('network.css');
+@import url('chatbot.css');
+@import url('details.css');
+@import url('messages.css');
+@import url('responsive.css');

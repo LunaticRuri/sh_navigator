@@ -162,6 +162,72 @@ async def _find_subject_candidates_by_needs(query) -> List[SubjectResponse]:
     subjects = [_row_to_subject_response(row) for row in subjects_data]
     return subjects
 
+async def _get_book_by_isbn(isbn: str) -> BookResponse:
+    db_manager = get_database_manager()
+    
+    async with db_manager.get_connection() as conn:
+        cursor = await conn.cursor()
+        await cursor.execute(
+            "SELECT isbn, title, kdc, publication_year, intro, toc, nlk_subjects FROM books WHERE isbn = ?",
+            (isbn,)
+        )
+        row = await cursor.fetchone()
+        
+    if row:
+        return _row_to_book_response(row)
+    else:
+        raise ValueError(f"Book with ISBN {isbn} not found.")
+    
+async def _get_subject_by_node_id(node_id: str) -> SubjectResponse:
+    db_manager = get_database_manager()
+    
+    async with db_manager.get_connection() as conn:
+        cursor = await conn.cursor()
+        await cursor.execute(
+            "SELECT node_id, label, definition FROM subjects WHERE node_id = ?",
+            (node_id,)
+        )
+        row = await cursor.fetchone()
+        
+    if row:
+        return _row_to_subject_response(row)
+    else:
+        raise ValueError(f"Subject with node_id {node_id} not found.")
+
+async def _get_related_books_by_subject(node_id: str, limit: int = 10) -> List[BookResponse]:
+    db_manager = get_database_manager()
+    try:
+        async with db_manager.get_connection() as conn:
+            cursor = await conn.cursor()
+            query = "SELECT isbn FROM book_subject_index WHERE node_id = ?"
+            await cursor.execute(query, (node_id,))
+            
+            retrieved_isbns = await cursor.fetchall()
+            if not retrieved_isbns:
+                return []
+
+            # Flatten the list of tuples to a list of ISBNs
+            retrieved_isbns = [row[0] for row in retrieved_isbns]
+            
+            # Query for book details by ISBNs
+            query = """
+            SELECT isbn, title, kdc, publication_year, intro, toc, nlk_subjects FROM books 
+            WHERE isbn IN ({}) ORDER BY publication_year DESC LIMIT ?
+            """.format(','.join('?' for _ in retrieved_isbns))
+
+            await cursor.execute(query, (*retrieved_isbns, limit))
+
+            books_data = await cursor.fetchall()
+
+            # Convert DB rows to response models
+            books = [_row_to_book_response(row) for row in books_data]
+
+            return books
+
+    except Exception as e:
+        logger.error(f"Error retrieving related books for subject {node_id}: {e}")
+        raise ValueError(f"Failed to retrieve related books for subject {node_id}: {e}")
+
 async def analyze_user_needs(user_input: str) -> UserNeedsAnalysis:
 
     contents = [user_input]
@@ -216,6 +282,45 @@ async def find_resources_from_needs(user_needs: UserNeeds) -> ResourcesFromNeeds
 async def filter_resources():
     ... # Implement filtering logic if needed
 
+
+async def find_resources_by_isbn(isbn: str) -> str:
+    try:
+        book_metadata = await _get_book_by_isbn(isbn)
+
+        if not book_metadata.nlk_subjects:
+            resource_str = f'책 정보: \n {book_metadata}'
+        else:
+            subjects = json.loads(book_metadata.nlk_subjects)
+            subject_list = []
+            for subject in subjects:
+                if 'id' in subject:
+                    try:
+                        subject_data = await _get_subject_by_node_id(subject['id'])
+                        subject_list.append(subject_data)
+                    except ValueError:
+                        break
+            if not subject_list:
+                resource_str = f'책 정보: \n {book_metadata}'
+            else:
+                subject_str = '\n'.join([f"주제: {subject.label} ID: {subject.node_id}, 정의:{subject.definition}" for subject in subject_list])
+                resource_str = f"책 정보: \n{book_metadata}\n\n관련 주제:\n{subject_str}"
+
+        return resource_str
+    
+    except ValueError as e:
+        raise RuntimeError(f"Metadata not found: {e}")
+    
+async def find_resources_by_node_id(node_id: str) -> str:
+    try:
+        subject_metadata = await _get_subject_by_node_id(node_id)
+        related_books = await _get_related_books_by_subject(node_id)
+        if not related_books:
+            return f"주제: {subject_metadata}"
+        else:
+            return f"주제: {subject_metadata}\n\n관련 책들:\n{related_books}"
+    
+    except ValueError as e:
+        raise RuntimeError(f"Subject not found: {e}")
 
 if __name__ == "__main__":
     user_input = "나는 서울의 역사에 대해 알고 싶어."

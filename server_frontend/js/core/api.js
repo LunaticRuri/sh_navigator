@@ -118,6 +118,37 @@ export class ApiClient {
                 session_id: sessionId
             })
         });
+
+    }
+
+    async sendChatRequestByBook(isbn, sessionId) {
+        const url = `${this.baseUrl}/chatbot/chat/book`;
+        return this.makeRequest(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                role: 'user',
+                content: isbn,
+                session_id: sessionId
+            })
+        });
+    }
+
+    async sendChatRequestBySubject(nodeId, sessionId) {
+        const url = `${this.baseUrl}/chatbot/chat/subject`;
+        return this.makeRequest(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                role: 'user',
+                content: nodeId,
+                session_id: sessionId
+            })
+        });
     }
 
     // 공통 요청 메서드

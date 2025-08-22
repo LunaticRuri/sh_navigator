@@ -7,7 +7,7 @@ from fastapi import HTTPException
 import google.generativeai as genai
 
 from schemas.chat import ChatMessage, ChatResponse, UserNeeds, UserNeedsAnalysis, ResourcesFromNeeds
-from chatbot.chat_pipeline import analyze_user_needs, find_resources_from_needs
+from chatbot.chat_pipeline import analyze_user_needs, find_resources_from_needs, find_resources_by_isbn, find_resources_by_node_id
 from chatbot.chat_manager import chat_session_manager
 from chatbot.chat_utils import get_system_prompt
 from core.utils import format_gemini_chat_history
@@ -56,7 +56,11 @@ class ChatService:
             # Retrieve or create chat session
             session_id = chat_session_manager.get_or_create_session(chat_message.session_id)
             history = chat_session_manager.get_session_history(session_id)
-
+            
+            if not history:
+                chat_session_manager.add_message_to_session(session_id, 'user', get_system_prompt())
+                history = chat_session_manager.get_session_history(session_id)
+            
             # Analyze user needs from the message
             needs_analysis: UserNeedsAnalysis = await analyze_user_needs(chat_message.content)
             if not needs_analysis.needs_exist:
@@ -69,8 +73,6 @@ class ChatService:
             # For each detected need, find related resources
             for need in needs_analysis.needs:
                 resource_from_needs: ResourcesFromNeeds = await find_resources_from_needs(need)
-                logger.info(need)
-                logger.info(resource_from_needs)
             
             # TODO: Temporary logic, should be improved for production
             # Compose enhanced content using needs analysis and resources
@@ -100,6 +102,84 @@ class ChatService:
                 error=str(e)
             )
 
+    async def chat_with_book(self, chat_message: ChatMessage) -> ChatResponse:
+        """
+        Start a conversation about a specific book.
+        Uses the chat history to generate a response.
+        """
+        if not self.is_available:
+            raise HTTPException(
+                status_code=503,
+                detail="챗봇 서비스를 사용할 수 없습니다. API 키가 설정되지 않았습니다."
+            )
+        try:
+            session_id = chat_session_manager.get_or_create_session(chat_message.session_id)
+            history = chat_session_manager.get_session_history(session_id)
+
+            if not history:
+                chat_session_manager.add_message_to_session(session_id, 'user', get_system_prompt())
+                history = chat_session_manager.get_session_history(session_id)
+
+            # Generate response using the book context
+            try:
+                resoruce_str = await find_resources_by_isbn(chat_message.content.strip())
+            except RuntimeError as e:
+                logger.error(f"Error finding book by ISBN: {e}")
+
+            enhanced_content = (
+                f"사용자에게 주어진 정보를 바탕으로 책을 소개하라. 주어진 정보가 없거나 부족하다면 이를 안내하라.\n"
+                f"{resoruce_str}\n"
+            )
+
+            response_text = await self._generate_response(enhanced_content, history)
+            chat_session_manager.add_message_to_session(session_id, 'user', enhanced_content)
+            chat_session_manager.add_message_to_session(session_id, 'assistant', response_text)
+            return ChatResponse(response=response_text, session_id=session_id)
+
+        except Exception as e:
+            logger.error(f"Error in chat_with_book: {e}")
+            raise HTTPException(status_code=500, detail="책에 대한 대화 중 오류가 발생했습니다.")
+    
+    async def chat_with_subject(self, chat_message: ChatMessage) -> ChatResponse:
+        # TODO: Implement subject-specific chat logic
+        """
+        Start a conversation about a specific subject.
+        Uses the chat history to generate a response.
+        """
+        if not self.is_available:
+            raise HTTPException(
+                status_code=503,
+                detail="챗봇 서비스를 사용할 수 없습니다. API 키가 설정되지 않았습니다."
+            )
+        try:
+            session_id = chat_session_manager.get_or_create_session(chat_message.session_id)
+            history = chat_session_manager.get_session_history(session_id)
+
+            if not history:
+                chat_session_manager.add_message_to_session(session_id, 'user', get_system_prompt())
+                history = chat_session_manager.get_session_history(session_id)
+
+            try:
+                subject_response = await find_resources_by_node_id(chat_message.content.strip())
+            except RuntimeError as e:
+                logger.error(f"Error finding subject by node ID: {e}")
+                raise HTTPException(status_code=404, detail="주제를 찾을 수 없습니다.")
+            # Generate response using the subject context
+            enhanced_content = (
+                f"사용자가 아래 주제에 대한 설명을 요구한다. 이에 대해 설명하되, 주어진 관련 정보가 없거나 부족하다면 이를 안내하라.\n"
+                f"{subject_response}\n"
+            )
+            # TODO: Implement subject-specific response generation logic
+            response_text = await self._generate_response(enhanced_content, history)
+            chat_session_manager.add_message_to_session(session_id, 'user', enhanced_content)
+            chat_session_manager.add_message_to_session(session_id, 'assistant', response_text)
+            return ChatResponse(response=response_text, session_id=session_id)
+
+        except Exception as e:
+            logger.error(f"Error in chat_with_subject: {e}")
+            raise HTTPException(status_code=500, detail="주제에 대한 대화 중 오류가 발생했습니다.")
+    
+
     async def _generate_response(self, message: str, history: List[Dict]) -> str:
         """
         Generate a response using Gemini API.
@@ -107,24 +187,6 @@ class ChatService:
         """
         try:
             chat_history = format_gemini_chat_history(history)
-            if not chat_history:
-                # If no history, initialize with system prompt
-                system_prompt = get_system_prompt()
-                chat_history = [
-                    {
-                        'role': 'user',
-                        'parts': [
-                            '안녕! 나는 도서관의 책과 주제명 표목을 통해 지적 탐색을 수행하고 싶은 사용자야.'
-                        ]
-                    },
-                    {
-                        'role': 'model',
-                        'parts': [
-                            system_prompt
-                        ]
-                    }
-                ]
-            
             # Start chat and send message using Gemini model
             chat = self.model.start_chat(history=chat_history)
             response = await asyncio.to_thread(chat.send_message, message)

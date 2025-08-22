@@ -10,7 +10,7 @@ class BookResponse(BaseModel):
     publication_year: Optional[str] = Field(None, description="Publication year")
     intro: Optional[str] = Field(None, description="Book introduction")
     toc: Optional[str] = Field(None, description="Table of contents")
-    nlk_subjects: Optional[str] = Field(None, description="NLK subject headings")
+    nlk_subjects: Optional[str] = Field(None, description="NLK subject headings, JSON formatted")
 
 class BookListResponse(BaseModel):
     """Model for a list of books"""

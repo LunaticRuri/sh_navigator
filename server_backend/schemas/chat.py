@@ -40,9 +40,9 @@ class ChatSession(BaseModel):
         except ValueError:
             raise ValueError('session_id must be a valid UUID')
     
-    def add_message(self, role: str, content: str) -> None:
+    def add_message(self, role: str, content: str, session_id: str) -> None:
         """Add a message to the session."""
-        message = ChatMessage(role=role, content=content)
+        message = ChatMessage(role=role, content=content, session_id=session_id)
         self.messages.append(message)
         self.last_activity = message.timestamp
     

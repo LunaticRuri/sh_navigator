@@ -14,6 +14,23 @@ async def chat_with_gemini(
     """Gemini AI 챗봇과 대화합니다."""
     return await chat_service.chat(chat_message)
 
+@router.post("/chat/book", response_model=ChatResponse)
+async def chat_with_book(
+    chat_message: ChatMessage, 
+    chat_service = Depends(get_chat_service)
+):
+    """책에 대한 대화를 시작합니다."""
+    return await chat_service.chat_with_book(chat_message)
+
+@router.post("/chat/subject", response_model=ChatResponse)
+async def chat_with_subject(
+    chat_message: ChatMessage,
+    chat_service = Depends(get_chat_service)
+):
+    """주제에 대한 대화를 시작합니다."""
+    return await chat_service.chat_with_subject(chat_message)
+
+
 @router.get("/status", response_model=ChatbotStatus)
 async def get_chatbot_status(chat_service = Depends(get_chat_service)):
     """챗봇 서비스 상태를 확인합니다."""

@@ -1,0 +1,175 @@
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 200px;
+    }
+    
+    .main-content {
+        margin-left: 200px;
+        padding: 20px 15px;
+    }
+    
+    .sidebar-header h2 {
+        font-size: 1.2em;
+    }
+    
+    .menu-item {
+        padding: 12px 15px;
+    }
+    
+    .menu-text {
+        font-size: 0.9em;
+    }
+    
+    .content-header h1 {
+        font-size: 2em;
+    }
+    
+    .search-tabs {
+        flex-wrap: wrap;
+    }
+    
+    .tab-button {
+        flex: 1;
+        min-width: 120px;
+        font-size: 0.9em;
+        padding: 8px 12px;
+    }
+    
+    .search-options {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    
+    .option-group {
+        justify-content: space-between;
+    }
+    
+    .search-input-group {
+        flex-direction: column;
+    }
+    
+    .search-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .book-meta {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .modal-content {
+        margin: 10% auto;
+        width: 95%;
+        padding: 20px;
+    }
+    
+    .relation-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .relation-type-badge {
+        align-self: flex-start;
+    }
+    
+    .container {
+        padding: 10px;
+    }
+    
+    header h1 {
+        font-size: 2em;
+    }
+    
+    .book-meta span {
+        display: inline-block;
+        width: fit-content;
+    }
+}
+
+@media (max-width: 480px) {
+    .sidebar {
+        width: 60px;
+    }
+    
+    .main-content {
+        margin-left: 60px;
+        padding: 15px 10px;
+    }
+    
+    .sidebar-header {
+        padding: 15px 10px;
+    }
+    
+    .sidebar-header h2 {
+        display: none;
+    }
+    
+    .menu-item {
+        padding: 15px 10px;
+        justify-content: center;
+    }
+    
+    .menu-text {
+        display: none;
+    }
+    
+    .menu-icon {
+        margin-right: 0;
+        text-align: center;
+    }
+    
+    .content-header h1 {
+        font-size: 1.8em;
+    }
+    
+    .content-header p {
+        font-size: 1em;
+    }
+    
+    .tab-button {
+        font-size: 0.8em;
+        padding: 6px 8px;
+        min-width: 100px;
+    }
+}
+
+/* 챗봇 반응형 디자인 */
+@media (max-width: 768px) {
+    .chatbot-container {
+        height: calc(100vh - 40px);
+        border-radius: 0;
+        margin: 0;
+    }
+    
+    .message {
+        max-width: 90%;
+    }
+    
+    .chat-messages {
+        padding: 15px;
+        gap: 12px;
+    }
+    
+    .chat-input-container {
+        padding: 15px;
+    }
+    
+    .message-content {
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+    
+    #chat-input {
+        font-size: 16px;
+        min-height: 40px;
+    }
+    
+    #send-button {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+    }
+}

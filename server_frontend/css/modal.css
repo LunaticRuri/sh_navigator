@@ -1,0 +1,208 @@
+/* 모달 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: var(--background-white);
+    margin: 5% auto;
+    padding: var(--spacing-xl);
+    border-radius: var(--border-radius-large);
+    width: 90%;
+    max-width: 800px;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.close {
+    position: absolute;
+    right: var(--spacing-lg);
+    top: var(--spacing-md);
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #aaa;
+    transition: color var(--transition-normal);
+}
+
+.close:hover {
+    color: var(--primary-color);
+}
+
+/* 주제 탐색 모달 스타일 */
+.subject-explore-modal .modal-content {
+    max-width: 900px;
+}
+
+.subject-explore-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.subject-explore-title {
+    color: #2c3e50;
+    margin: 0;
+}
+
+.subject-id-badge {
+    background-color: #3498db;
+    color: var(--background-white);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: var(--font-size-xs);
+}
+
+.subject-detail-title {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 1.8em;
+}
+
+.subject-detail-section {
+    margin-bottom: 25px;
+}
+
+.subject-detail-section h3 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+.relations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.relation-item {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #f9f9f9;
+}
+
+.relation-item:hover {
+    background: #f0f8ff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.relation-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.relation-type-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75em;
+    font-weight: bold;
+    color: white;
+}
+
+.relation-type-badge.broader {
+    background-color: #e74c3c;
+}
+
+.relation-type-badge.narrower {
+    background-color: #27ae60;
+}
+
+.relation-type-badge.related {
+    background-color: #3498db;
+}
+
+.relation-type-badge.equivalent {
+    background-color: #9b59b6;
+}
+
+.relation-target {
+    flex: 1;
+    font-weight: 500;
+}
+
+.metadata-info {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.relation-meta {
+    margin-top: 5px;
+}
+
+.relation-meta small {
+    color: #888;
+}
+
+.modal-actions {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.btn-primary {
+    background-color: #3498db;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+}
+
+.book-detail-title {
+    font-size: 1.8em;
+    color: #333;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eee;
+}
+
+.book-detail-section {
+    margin-bottom: 20px;
+}
+
+.book-detail-section h3 {
+    color: #667eea;
+    margin-bottom: 10px;
+    font-size: 1.2em;
+}
+
+.book-detail-section p {
+    line-height: 1.6;
+    color: #555;
+}
+
+.book-detail-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.meta-item {
+    background: #f8f9fa;
+    padding: 5px;
+    border-radius: 5px;
+}

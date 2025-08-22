@@ -1,0 +1,147 @@
+/* 검색 섹션 */
+.search-section {
+    background: var(--background-white);
+    padding: var(--spacing-xl);
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--shadow);
+    margin-bottom: var(--spacing-xl);
+}
+
+.search-tabs {
+    display: flex;
+    margin-bottom: var(--spacing-lg);
+    border-bottom: 2px solid #eee;
+}
+
+.tab-button {
+    background: none;
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    cursor: pointer;
+    font-size: var(--font-size-base);
+    color: var(--text-muted);
+    border-bottom: 2px solid transparent;
+    transition: all var(--transition-normal);
+}
+
+.tab-button.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.tab-button:hover {
+    color: var(--primary-color);
+}
+
+.search-form {
+    display: none;
+}
+
+.search-form.active {
+    display: block;
+}
+
+.search-input-group {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+.search-input-group input {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid var(--border-color-light);
+    border-radius: var(--border-radius);
+    font-size: var(--font-size-base);
+}
+
+.search-input-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.search-input-group button,
+.search-form > button {
+    padding: 12px 24px;
+    background: var(--primary-gradient);
+    color: var(--background-white);
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: var(--font-size-base);
+    transition: transform var(--transition-fast);
+}
+
+.search-input-group button:hover,
+.search-form > button:hover {
+    transform: translateY(-2px);
+}
+
+.search-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.search-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+
+.search-field input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 1em;
+}
+
+.search-field input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+/* 검색 옵션 스타일 */
+.search-options {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    flex-wrap: wrap;
+}
+
+.option-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.search-options label {
+    font-weight: bold;
+    color: #555;
+    white-space: nowrap;
+}
+
+.search-options input[type="range"] {
+    width: 100px;
+}
+
+.search-options select {
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    background-color: white;
+    font-size: 1em;
+}
+
+#network-threshold-value {
+    font-weight: bold;
+    color: #667eea;
+    min-width: 30px;
+}

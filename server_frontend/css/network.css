@@ -1,0 +1,521 @@
+/* 네트워크 시각화 스타일 */
+.network-controls {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.seed-search {
+    margin-bottom: 20px;
+}
+
+.seed-candidates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.seed-candidate {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+    max-width: 300px;
+}
+
+.seed-candidate:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.seed-candidate-label {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.seed-candidate-definition {
+    font-size: 0.9em;
+    opacity: 0.8;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+}
+
+.network-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+#reset-network {
+    padding: 10px 20px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+#reset-network:hover {
+    background: #c82333;
+}
+
+#reset-network:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+.expansion-settings {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9em;
+}
+
+.expansion-settings label {
+    color: #666;
+    white-space: nowrap;
+}
+
+#max-expansion-nodes {
+    padding: 5px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9em;
+    background: white;
+    cursor: pointer;
+}
+
+#max-expansion-nodes:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.network-info {
+    display: flex;
+    gap: 20px;
+    font-size: 0.9em;
+    color: #666;
+}
+
+/* 네트워크 로딩 오버레이 */
+.network-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    border-radius: 8px;
+}
+
+.network-loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    padding: 30px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.network-loading-content .loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.network-loading-content .loading-text {
+    font-size: 16px;
+    color: #333;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* 네트워크 컨테이너 상대 위치 설정 */
+.network-container {
+    position: relative;
+    width: 100%;
+    height: 600px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    background: #f8f9fa;
+    overflow: hidden;
+}
+
+#network-visualization {
+    width: 100%;
+    height: 100%;
+}
+
+.network-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    max-width: 300px;
+    z-index: 1000;
+}
+
+.network-tooltip.visible {
+    opacity: 1;
+}
+
+/* D3.js 네트워크 요소 스타일 */
+.node {
+    cursor: pointer;
+    stroke: #fff;
+    stroke-width: 2px;
+}
+
+.node.current {
+    fill: #667eea;
+}
+
+.node.neighbor {
+    fill: #28a745;
+}
+
+.node.expanded {
+    fill: #ffc107;
+}
+
+.node:hover {
+    stroke-width: 3px;
+}
+
+/* 도서 노드 스타일 (사각형) */
+.book-node {
+    stroke: #fff;
+    stroke-width: 2px;
+}
+
+.book-node.current {
+    fill: #dc3545;
+}
+
+.book-node.neighbor {
+    fill: #6f42c1;
+}
+
+.book-node.expanded {
+    fill: #fd7e14;
+}
+
+/* 노드 컨텍스트 메뉴 */
+.node-context-menu {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-large);
+    padding: 8px 0;
+    min-width: 150px;
+    font-size: var(--font-size-sm);
+    z-index: 1000;
+}
+
+.context-menu-item {
+    padding: 8px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+}
+
+.context-menu-item:hover {
+    background-color: var(--background-lighter);
+}
+
+.link {
+    stroke: #999;
+    stroke-opacity: 0.6;
+    stroke-width: 2px;
+}
+
+.link-label {
+    font-size: 10px;
+    fill: #666;
+    text-anchor: middle;
+    pointer-events: none;
+}
+
+.node-label {
+    font-size: 12px;
+    fill: #333;
+    text-anchor: middle;
+    pointer-events: none;
+    font-weight: 500;
+}
+
+/* 관련 주제 리스트 스타일 */
+.relations-list {
+    margin-top: var(--spacing-md);
+    display: grid;
+    gap: 12px;
+}
+
+.relation-item {
+    background: var(--background-white);
+    border: 2px solid var(--border-color-lighter);
+    border-radius: var(--border-radius-xl);
+    padding: 16px;
+    transition: all var(--transition-normal);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.relation-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+    border-color: var(--info-color);
+}
+
+.relation-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.relation-type-badge {
+    padding: 6px 12px;
+    border-radius: var(--border-radius-pill);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    color: var(--background-white);
+}
+
+/* 관계 유형별 색상 테마 */
+
+/* 상위 주제 (broader) */
+.relation-item.broader {
+    border-left: 6px solid var(--network-broader);
+    background: linear-gradient(135deg, #f8fff9 0%, var(--background-white) 100%);
+}
+
+.relation-type-badge.broader {
+    background: var(--network-broader);
+}
+
+.relation-item.broader:hover {
+    border-color: var(--network-broader);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+}
+
+/* 하위 주제 (narrower) */
+.relation-item.narrower {
+    border-left: 6px solid var(--network-narrower);
+    background: linear-gradient(135deg, #f8fbff 0%, var(--background-white) 100%);
+}
+
+.relation-type-badge.narrower {
+    background: var(--network-narrower);
+}
+
+.relation-item.narrower:hover {
+    border-color: var(--network-narrower);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+}
+
+/* 관련 주제 (related) */
+.relation-item.related {
+    border-left: 6px solid var(--network-related);
+    background: linear-gradient(135deg, #fffaf7 0%, var(--background-white) 100%);
+}
+
+.relation-type-badge.related {
+    background: var(--network-related);
+}
+
+.relation-item.related:hover {
+    border-color: var(--network-related);
+    box-shadow: 0 4px 12px rgba(253, 126, 20, 0.2);
+}
+
+/* 유사 벡터 주제 (cosine_related) */
+.relation-item.cosine_related {
+    border-left: 6px solid var(--network-cosine);
+    background: linear-gradient(135deg, #fbf9ff 0%, var(--background-white) 100%);
+}
+
+.relation-type-badge.cosine_related {
+    background: var(--network-cosine);
+}
+
+.relation-item.cosine_related:hover {
+    border-color: var(--network-cosine);
+    box-shadow: 0 4px 12px rgba(111, 66, 193, 0.2);
+}
+
+/* 생성된 주제 (generated) */
+.relation-item.generated {
+    border-left: 6px solid var(--network-generated);
+    background: linear-gradient(135deg, #fbf9ff 0%, var(--background-white) 100%);
+}
+
+.relation-type-badge.generated {
+    background: var(--network-generated);
+}
+
+.relation-item.generated:hover {
+    border-color: var(--network-generated);
+    box-shadow: 0 4px 12px rgba(111, 66, 193, 0.2);
+}
+
+/* 관련 주제 타겟 스타일 */
+.relation-target {
+    color: #495057;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 1.4;
+    flex: 1;
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.relation-target:hover {
+    color: var(--info-color);
+    text-decoration: underline;
+}
+
+.relation-meta {
+    color: #6c757d;
+    font-size: 13px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--background-light);
+}
+
+.relation-meta small {
+    background: var(--background-light);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: var(--font-family-mono);
+}
+
+/* 메타데이터 정보 스타일 */
+.metadata-info {
+    color: #6c757d;
+    font-size: 13px;
+    font-weight: normal;
+}
+
+/* 관련 도서 스타일 개선 */
+.related-books-list {
+    max-height: 600px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-md);
+    background-color: #fafafa;
+}
+
+.related-book-item {
+    border: 1px solid var(--border-color-light);
+    border-radius: 6px;
+    padding: var(--spacing-md);
+    margin-bottom: 12px;
+    background-color: var(--background-white);
+    transition: all var(--transition-fast);
+    cursor: pointer;
+}
+
+.related-book-item:hover {
+    border-color: var(--info-color);
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+.related-book-item:last-child {
+    margin-bottom: 0;
+}
+
+.book-title {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text-color);
+    margin-bottom: var(--spacing-sm);
+    line-height: 1.4;
+    border-left: 3px solid var(--primary-color);
+    padding-left: 12px;
+}
+
+.book-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    padding-left: var(--spacing-md);
+}
+
+.book-meta span {
+    background-color: var(--background-light);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color-lighter);
+}
+
+.book-intro {
+    font-size: var(--font-size-sm);
+    color: var(--text-light);
+    line-height: 1.4;
+    margin-top: var(--spacing-sm);
+    padding-left: var(--spacing-md);
+    font-style: italic;
+}
+
+/* 스크롤바 스타일링 */
+.related-books-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.related-books-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.related-books-list::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.related-books-list::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* 연결 유형별 색상 */
+.link.broader { stroke: #007bff; }
+.link.narrower { stroke: #28a745; }
+.link.related { stroke: #ffc107; }
+.link.cosine_related { stroke: #6c757d; }

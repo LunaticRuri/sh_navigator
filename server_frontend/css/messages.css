@@ -1,0 +1,19 @@
+/* 에러 메시지 */
+.error-message {
+    background: #fee;
+    color: #c33;
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius);
+    margin: var(--spacing-lg) 0;
+    border-left: 4px solid #c33;
+}
+
+/* 성공 메시지 */
+.success-message {
+    background: #efe;
+    color: #363;
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius);
+    margin: var(--spacing-lg) 0;
+    border-left: 4px solid #363;
+}

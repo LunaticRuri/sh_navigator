@@ -1,0 +1,181 @@
+/* 결과 섹션 */
+.results-section {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.search-info {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    color: #666;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    font-size: 1.2em;
+    color: #667eea;
+    display: none;
+}
+
+/* 주제 세부 정보 */
+.subject-detail-meta {
+    margin-bottom: 10px;
+}
+
+/* 공통 결과 아이템 스타일 */
+.result-item, .book-item, .subject-item {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.result-item:hover, .book-item:hover, .subject-item:hover {
+    background: #f8f9fa;
+    border-color: #007bff;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+}
+
+/* 공통 제목 스타일 */
+.result-title, .book-title, .subject-title {
+    font-size: 1.3em;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+/* 공통 메타 정보 스타일 */
+.result-meta, .book-meta, .subject-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 10px;
+    color: #666;
+    font-size: 14px;
+}
+
+.result-meta span, .book-meta span, .subject-meta span {
+    background: #f1f3f4;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+/* 공통 본문 스타일 */
+.result-content, .book-intro, .subject-definition {
+    color: #777;
+    font-size: 0.95em;
+    line-height: 1.5;
+    max-height: 60px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+/* 페이지네이션 */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+.pagination button {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.3s;
+}
+
+.pagination button:hover {
+    background: #f5f5f5;
+}
+
+.pagination button.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* NLK Subjects 스타일 */
+.nlk-subjects-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.nlk-subject-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: #f0f4ff;
+    border: 1px solid #e0e8ff;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.nlk-subject-item:hover {
+    background: #e6f0ff;
+}
+
+/* 클릭 가능한 주제 아이템 스타일 */
+.clickable-subject {
+    cursor: pointer;
+}
+
+.clickable-subject:hover {
+    background-color: #e3f2fd !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.clickable-subject:active {
+    transform: translateY(0);
+}
+
+.subject-label {
+    flex: 1;
+    font-weight: 500;
+    color: #333;
+}
+
+.subject-type {
+    background: #667eea;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: 600;
+}
+
+.subject-id {
+    font-family: monospace;
+    font-size: 0.85em;
+    color: #666;
+    background: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.meta-item strong {
+    color: #667eea;
+}

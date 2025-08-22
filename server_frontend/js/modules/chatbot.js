@@ -46,7 +46,6 @@ export class ChatbotModule {
      * Binds the reference click handler to the global scope for inline onclick handlers.
      */
     bindReferenceClickHandler() {
-        // 전역 함수로 등록하여 인라인 onclick 핸들러에서 사용 가능하도록 함
         window.handleReferenceClick = this.handleReferenceClick.bind(this);
     }
 
@@ -230,6 +229,73 @@ export class ChatbotModule {
     }
 
     /**
+     * Handles clicks on reference links (subject or book references).
+     * @param {Event} event - The click event
+     * @param {string} referenceCode - The reference code (ISBN or subject code)
+     * @param {string} referenceType - 'subject' or 'book'
+     */
+    async handleReferenceClick(event, referenceCode, referenceType) {
+        event.preventDefault();
+        console.log(`${referenceType} 참조 클릭됨:`, referenceCode);
+        
+        // TODO: 실제 기능 구현
+        // alert(`${referenceType === 'subject' ? '주제' : '도서'} 참조: ${referenceCode}\n(아직 구현되지 않음)`);
+        
+        
+        if (referenceType === 'subject') {
+            let message = `주제 ${referenceCode} ?`;
+            
+            // Add user message to chat
+            this.addMessage(message, 'user');
+            
+            // Show typing indicator while waiting for response
+            this.showTypingIndicator();
+            
+            const result = await this.apiClient.sendChatRequestBySubject(referenceCode, this.currentSessionId);
+            
+            // Remove typing indicator after response
+            this.hideTypingIndicator();
+            
+            if (result.success) {
+                // Update session ID and add bot response
+                this.currentSessionId = result.data.session_id;
+                this.addMessage(result.data.response, 'bot');
+            } else {
+                // Show error message from bot
+                this.addMessage(`오류: ${result.error}`, 'bot');
+            }
+        }
+        else if (referenceType === 'book') {
+            let message = `도서 ${referenceCode} ?`;
+            
+            // Add user message to chat
+            this.addMessage(message, 'user');
+            
+            // Show typing indicator while waiting for response
+            this.showTypingIndicator();
+            
+            const result = await this.apiClient.sendChatRequestByBook(referenceCode, this.currentSessionId);
+            
+            // Remove typing indicator after response
+            this.hideTypingIndicator();
+            
+            if (result.success) {
+                // Update session ID and add bot response
+                this.currentSessionId = result.data.session_id;
+                this.addMessage(result.data.response, 'bot');
+            } else {
+                // Show error message from bot
+                this.addMessage(`오류: ${result.error}`, 'bot');
+            }
+            
+        }
+        else {
+            console.error('알 수 없는 참조 유형:', referenceType);
+            return;
+        }
+    }
+
+    /**
      * Automatically adjusts the height of the chat input textarea.
      * @param {HTMLTextAreaElement} textarea 
      */
@@ -238,30 +304,4 @@ export class ChatbotModule {
         textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
     }
 
-    /**
-     * Handles clicks on reference links (subject or book references).
-     * @param {Event} event - The click event
-     * @param {string} referenceCode - The reference code (ISBN or subject code)
-     * @param {string} referenceType - 'subject' or 'book'
-     */
-    handleReferenceClick(event, referenceCode, referenceType) {
-        event.preventDefault();
-        console.log(`${referenceType} 참조 클릭됨:`, referenceCode);
-        
-        // TODO: 실제 기능 구현
-        // referenceType이 'subject'인 경우 -> 주제 상세 페이지로 이동
-        // referenceType이 'book'인 경우 -> 도서 상세 페이지로 이동
-        
-        // alert(`${referenceType === 'subject' ? '주제' : '도서'} 참조: ${referenceCode}\n(아직 구현되지 않음)`);
-        const questionText = referenceType === 'subject' 
-            ? `주제 ${referenceCode}에 대해 자세히 알려주세요.`
-            : `ISBN ${referenceCode} 도서에 대해 자세히 알려주세요.`;
-            
-        // 채팅 입력창에 질문 설정하고 전송
-        const chatInput = document.getElementById('chat-input');
-        if (chatInput) {
-            chatInput.value = questionText;
-            this.sendMessage();
-        }
-    }
 }
