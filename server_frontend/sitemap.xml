@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
     <url>
-        <loc>https://sh-navigator.com/</loc>
+        <loc>https://shnavigator.com/</loc>
         <lastmod>2025-01-17</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
@@ -13,7 +13,7 @@
         />
     </url>
     <url>
-        <loc>https://sh-navigator.com/introduction/</loc>
+        <loc>https://shnavigator.com/introduction/</loc>
         <lastmod>2025-01-17</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.9</priority>

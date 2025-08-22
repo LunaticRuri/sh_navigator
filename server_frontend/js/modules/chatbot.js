@@ -17,6 +17,7 @@ export class ChatbotModule {
     init() {
         this.bindEvents();
         this.initializeChatbot();
+        this.bindReferenceClickHandler();
     }
 
     /**
@@ -39,6 +40,14 @@ export class ChatbotModule {
                 this.adjustTextareaHeight(chatInput);
             });
         }
+    }
+
+    /**
+     * Binds the reference click handler to the global scope for inline onclick handlers.
+     */
+    bindReferenceClickHandler() {
+        // 전역 함수로 등록하여 인라인 onclick 핸들러에서 사용 가능하도록 함
+        window.handleReferenceClick = this.handleReferenceClick.bind(this);
     }
 
     /**
@@ -227,5 +236,32 @@ export class ChatbotModule {
     adjustTextareaHeight(textarea) {
         textarea.style.height = 'auto';
         textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    }
+
+    /**
+     * Handles clicks on reference links (subject or book references).
+     * @param {Event} event - The click event
+     * @param {string} referenceCode - The reference code (ISBN or subject code)
+     * @param {string} referenceType - 'subject' or 'book'
+     */
+    handleReferenceClick(event, referenceCode, referenceType) {
+        event.preventDefault();
+        console.log(`${referenceType} 참조 클릭됨:`, referenceCode);
+        
+        // TODO: 실제 기능 구현
+        // referenceType이 'subject'인 경우 -> 주제 상세 페이지로 이동
+        // referenceType이 'book'인 경우 -> 도서 상세 페이지로 이동
+        
+        // alert(`${referenceType === 'subject' ? '주제' : '도서'} 참조: ${referenceCode}\n(아직 구현되지 않음)`);
+        const questionText = referenceType === 'subject' 
+            ? `주제 ${referenceCode}에 대해 자세히 알려주세요.`
+            : `ISBN ${referenceCode} 도서에 대해 자세히 알려주세요.`;
+            
+        // 채팅 입력창에 질문 설정하고 전송
+        const chatInput = document.getElementById('chat-input');
+        if (chatInput) {
+            chatInput.value = questionText;
+            this.sendMessage();
+        }
     }
 }

@@ -154,18 +154,3 @@ export function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
-
-// 참조 링크 클릭 핸들러
-export function handleReferenceClick(event, referenceCode, referenceType) {
-    event.preventDefault();
-    console.log(`${referenceType} 참조 클릭됨:`, referenceCode);
-    
-    // TODO: 실제 기능 구현
-    // referenceType이 'subject'인 경우 -> 주제 상세 페이지로 이동
-    // referenceType이 'book'인 경우 -> 도서 상세 페이지로 이동
-    // 임시로 알림 표시
-    alert(`${referenceType === 'subject' ? '주제' : '도서'} 참조: ${referenceCode}\n(아직 구현되지 않음)`);
-}
-
-// 전역 함수로 등록
-window.handleReferenceClick = handleReferenceClick;
