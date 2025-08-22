@@ -264,19 +264,17 @@ async def analyze_user_needs(user_input: str) -> UserNeedsAnalysis:
 async def find_resources_from_needs(user_needs: UserNeeds) -> ResourcesFromNeeds:
     
     book_candidates = []
-    sub_subject_candidates = []
-    obj_subject_candidates = []
-
+    subject_candidates = []
     
     keywords_str = ', '.join(user_needs.keywords)
     book_candidates.extend(await _find_book_candidates_by_needs(keywords_str))
-    sub_subject_candidates.extend(await _find_subject_candidates_by_needs(user_needs.subject_))
-    obj_subject_candidates.extend(await _find_subject_candidates_by_needs(user_needs.object_))
+    
+    # TODO: Need to improve the subject search logic (RDF triples)
+    subject_candidates.extend(await _find_subject_candidates_by_needs(keywords_str))
     
     return ResourcesFromNeeds(
         books=book_candidates,
-        sub_subjects=sub_subject_candidates,
-        obj_subjects=obj_subject_candidates
+        subjects=subject_candidates
     )      
 
 async def filter_resources():
@@ -309,18 +307,65 @@ async def find_resources_by_isbn(isbn: str) -> str:
     
     except ValueError as e:
         raise RuntimeError(f"Metadata not found: {e}")
-    
+
 async def find_resources_by_node_id(node_id: str) -> str:
     try:
         subject_metadata = await _get_subject_by_node_id(node_id)
         related_books = await _get_related_books_by_subject(node_id)
-        if not related_books:
-            return f"주제: {subject_metadata}"
-        else:
-            return f"주제: {subject_metadata}\n\n관련 책들:\n{related_books}"
+
+        http_client = httpx.AsyncClient(timeout=10.0)
+    
+        # Get subject-related subjects
+        response = await http_client.get(
+            f"{NETWORK_SERVER_URL}/node/neighbors",
+            params={"node_id": node_id}
+        )
+        response.raise_for_status()
+        search_data = response.json()
+        nodes = search_data.get("nodes", [])
+        edges = search_data.get("edges", [])
+
+        relations = []
+        for edge in edges:
+            for node in nodes:
+                if edge['source_id'] == node_id and edge['target_id'] == node['node_id']:
+                    if 'predicate' in edge and 'description' in edge:
+                        relations.append({
+                            "source_id": node_id,
+                            "source_label": subject_metadata.label,
+                            "target_id": node['node_id'],
+                            "target_label": node['label'],
+                            "relation_type": edge['predicate'],
+                            "predicate": edge['predicate'],
+                            "description": edge['description']
+                        })
+                    else:
+                        relations.append({
+                            "source_id": node_id,
+                            "source_label": subject_metadata.label,
+                            "target_id": node['node_id'],
+                            "target_label": node['label'],
+                            "relation_type": edge['relation_type']
+                        })
+
+        resource_str = f"주제 정보: \n{subject_metadata}\n\n"
+
+        if related_books:
+            resource_str += f"관련 책:\n {related_books}\n\n"
+        
+        if relations:
+            resource_str += "관련 주제 관계:\n"
+            resource_str += json.dumps(relations, ensure_ascii=False, indent=2)
+        logger.info(f"Relations found: {json.dumps(relations, ensure_ascii=False, indent=2)}")
+        return resource_str
     
     except ValueError as e:
         raise RuntimeError(f"Subject not found: {e}")
+
+
+# TODO: Implement additional resource retrieval logic if needed
+async def add_one_more_subject_resource():
+    ...
 
 if __name__ == "__main__":
     user_input = "나는 서울의 역사에 대해 알고 싶어."

@@ -141,7 +141,6 @@ class ChatService:
             raise HTTPException(status_code=500, detail="책에 대한 대화 중 오류가 발생했습니다.")
     
     async def chat_with_subject(self, chat_message: ChatMessage) -> ChatResponse:
-        # TODO: Implement subject-specific chat logic
         """
         Start a conversation about a specific subject.
         Uses the chat history to generate a response.
@@ -166,10 +165,9 @@ class ChatService:
                 raise HTTPException(status_code=404, detail="주제를 찾을 수 없습니다.")
             # Generate response using the subject context
             enhanced_content = (
-                f"사용자가 아래 주제에 대한 설명을 요구한다. 이에 대해 설명하되, 주어진 관련 정보가 없거나 부족하다면 이를 안내하라.\n"
+                f"아래 주제에 대해 안내하라. 너의 역할은 주어진 주제와 관련된 책이나 관련된 주제 등을 통해 이용자에게 접근점을 제시하는 것이다. 주어진 관련 정보가 없거나 부족하다면 이를 안내하라.\n"
                 f"{subject_response}\n"
             )
-            # TODO: Implement subject-specific response generation logic
             response_text = await self._generate_response(enhanced_content, history)
             chat_session_manager.add_message_to_session(session_id, 'user', enhanced_content)
             chat_session_manager.add_message_to_session(session_id, 'assistant', response_text)

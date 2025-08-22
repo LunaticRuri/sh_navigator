@@ -238,7 +238,6 @@ export class ChatbotModule {
         event.preventDefault();
         console.log(`${referenceType} 참조 클릭됨:`, referenceCode);
         
-        // TODO: 실제 기능 구현
         // alert(`${referenceType === 'subject' ? '주제' : '도서'} 참조: ${referenceCode}\n(아직 구현되지 않음)`);
         
         

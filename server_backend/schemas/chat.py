@@ -101,5 +101,4 @@ class UserNeedsAnalysis(BaseModel):
 
 class ResourcesFromNeeds(BaseModel):
     books: List[BookResponse] = Field(..., description="List of book candidates based on user needs")
-    sub_subjects: List[SubjectResponse] = Field(..., description="List of subject candidates based on user needs")
-    obj_subjects: List[SubjectResponse] = Field(..., description="List of object candidates based on user needs")
+    subjects: List[SubjectResponse] = Field(..., description="List of subject candidates based on user needs")
