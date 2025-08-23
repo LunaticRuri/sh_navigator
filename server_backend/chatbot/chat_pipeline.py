@@ -356,7 +356,6 @@ async def find_resources_by_node_id(node_id: str) -> str:
         if relations:
             resource_str += "관련 주제 관계:\n"
             resource_str += json.dumps(relations, ensure_ascii=False, indent=2)
-        logger.info(f"Relations found: {json.dumps(relations, ensure_ascii=False, indent=2)}")
         return resource_str
     
     except ValueError as e:
@@ -364,8 +363,70 @@ async def find_resources_by_node_id(node_id: str) -> str:
 
 
 # TODO: Implement additional resource retrieval logic if needed
-async def add_one_more_subject_resource():
-    ...
+async def add_one_more_subject_resource(history, node_id: str = None) -> dict:
+    if node_id:
+        subject_metadata = await _get_subject_by_node_id(node_id)
+        subject_metadata_str = f"주제 정보: {subject_metadata}\n" if subject_metadata.definition else ""
+    
+    history_str = f"대화 기록: {history}\n"
+    one_more_subject_config = genai.GenerationConfig(
+        response_mime_type="application/json",
+        response_schema=Schema(
+            type = Type.OBJECT,
+            required = ["description", "keywords"],
+            properties = {
+                "description": Schema(
+                    type = Type.STRING
+                ),
+                "keywords": Schema(
+                    type = Type.ARRAY,
+                    items = Schema(
+                        type = Type.STRING
+                    ),
+                    min_items=4  # Ensure at least 4 keywords are provided
+                )
+            }
+        )
+    )
+    one_more_subject_instruction = (
+        "사용자의 대화 기록과 주제 정보 등 여러 맥락을 바탕으로, 이용자에게 다양한 관점이나 창의적인 접근을 제공할 수 있는 추가적인 주제 정보를 찾아보자\n"
+        "단, 주제 정보가 주어지는 경우에는 이를 우선하여 고려하여야 한다.\n"
+        "예시1: 인공지능에 대한 맥락이 있다면, '인공지능의 윤리적 측면'이나 '인공지능과 예술' 같은 추가적인 주제를 제안할 수 있다.\n"
+        "예시2: 애니메이션 회사 픽사에 대한 맥락이 있다면, 픽사 애니메이션의 인트로에 나오는 램프의 기능주의 디자인과 관련된 주제를 제안할 수 있다.\n"
+        "예시3: 수학의 해석학에 대한 맥락이 있다면, 철학에서의 해석학에 대한 주제를 제안할 수 있다.\n"
+        "description에는 추가적인 주제 선정 이유를 작성하고, keywords에는 그 주제를 찾는 데에 도움이 될만한 키워드(단어 또는 구)를 최소한 4개 이상 나타내자."
+    )
+
+    one_more_subject_model = genai.GenerativeModel(
+        GEMINI_MODEL,
+        system_instruction=one_more_subject_instruction
+    )
+    try:
+        response = await one_more_subject_model.generate_content_async(
+            contents=[subject_metadata_str, history_str],
+            generation_config=one_more_subject_config
+        )
+        logger.info(f"Response from Gemini for one more subject: {response.text}")
+        response_json = json.loads(response.text)
+        
+        description = response_json.get("description", "")
+        keywords = response_json.get("keywords", [])
+        
+        if not description or not keywords:
+            raise ValueError("Incomplete response from Gemini for additional subject.")
+        
+        keywords_str = ', '.join(keywords)
+        subject_candidates = await _find_subject_candidates_by_needs(keywords_str)
+        
+        return {
+            "description": description,
+            "keywords": keywords,
+            "subject_candidates": subject_candidates
+        }
+        
+    except Exception as e:
+        raise RuntimeError(f"Failed to generate additional subject content: {e}")
+
 
 if __name__ == "__main__":
     user_input = "나는 서울의 역사에 대해 알고 싶어."

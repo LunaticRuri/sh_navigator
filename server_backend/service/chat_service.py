@@ -7,11 +7,11 @@ from fastapi import HTTPException
 import google.generativeai as genai
 
 from schemas.chat import ChatMessage, ChatResponse, UserNeeds, UserNeedsAnalysis, ResourcesFromNeeds
-from chatbot.chat_pipeline import analyze_user_needs, find_resources_from_needs, find_resources_by_isbn, find_resources_by_node_id
+from chatbot.chat_pipeline import analyze_user_needs, find_resources_from_needs, find_resources_by_isbn, find_resources_by_node_id, add_one_more_subject_resource
 from chatbot.chat_manager import chat_session_manager
 from chatbot.chat_utils import get_system_prompt
 from core.utils import format_gemini_chat_history
-from core.config import GEMINI_API_KEY, GEMINI_MODEL
+from core.config import GEMINI_API_KEY, GEMINI_MODEL, GEMINI_MODEL_LITE
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +32,7 @@ class ChatService:
             try:
                 genai.configure(api_key=GEMINI_API_KEY)
                 self.model = genai.GenerativeModel(GEMINI_MODEL)
+                self.lite_model = genai.GenerativeModel(GEMINI_MODEL_LITE)
                 self.is_available = True
                 logger.info("Gemini API initialized successfully")
             except Exception as e:
@@ -69,21 +70,18 @@ class ChatService:
                 chat_session_manager.add_message_to_session(session_id, 'user', chat_message.content)
                 chat_session_manager.add_message_to_session(session_id, 'assistant', response_text)
                 return ChatResponse(response=response_text, session_id=session_id)
-
-            # For each detected need, find related resources
-            for need in needs_analysis.needs:
-                resource_from_needs: ResourcesFromNeeds = await find_resources_from_needs(need)
             
             # TODO: Temporary logic, should be improved for production
-            # Compose enhanced content using needs analysis and resources
-            needs_analysis_text = str(needs_analysis)
-            resources_text = str(resource_from_needs)
+            
+            resource_text = ""
+            for need in needs_analysis.needs:
+                resource_from_needs: ResourcesFromNeeds = await find_resources_from_needs(need)
+                resource_text += f"<요구분석 내용> -> {need} \n 관련 책과 주제명 표목 -> {resource_from_needs}\n\n"
 
             enhanced_content = (
                 f"{chat_message.content}\n"
                 f"아래는 사용자 요구 분석 결과와 그에 따른 관련 책과 주제명 표목이다. 이를 활용하여 사용자의 정보요구를 해결하고, 지적 탐험을 도와라.\n"
-                f"요구분석 내용: {resources_text}\n"
-                f"관련 책과 주제명 표목: {needs_analysis_text}\n"
+                f"{resource_text}"
             ) 
             
             # Generate response using enhanced content
@@ -165,12 +163,30 @@ class ChatService:
                 raise HTTPException(status_code=404, detail="주제를 찾을 수 없습니다.")
             # Generate response using the subject context
             enhanced_content = (
-                f"아래 주제에 대해 안내하라. 너의 역할은 주어진 주제와 관련된 책이나 관련된 주제 등을 통해 이용자에게 접근점을 제시하는 것이다. 주어진 관련 정보가 없거나 부족하다면 이를 안내하라.\n"
+                "아래 주제에 대해 안내하라. 너의 역할은 주어진 주제와 관련된 책이나 관련된 주제 등을 통해 이용자에게 접근점을 제시하는 것이다.\n"
+                "주제를 안내하기 위해 주어진 관련 정보가 없거나 부족하다면 이를 밝혀라.\n"
+                "관련 주제 관계에 대해서는 모두 밝힐 필요가 없고, 사용자가 다양한 관점을 가질 수 있도록 돕는 주제들을 중심으로 선정하여 설명하자.\n"
                 f"{subject_response}\n"
             )
             response_text = await self._generate_response(enhanced_content, history)
             chat_session_manager.add_message_to_session(session_id, 'user', enhanced_content)
             chat_session_manager.add_message_to_session(session_id, 'assistant', response_text)
+            
+            one_more_string = (
+                "다음은 이용자가 다양한 관점이나 창의적 지적 탐험을 할 수 있기 위해 찾은 주제 자원이다."
+                "이를 활용하여 이용자가 더 깊이 탐구할 수 있도록 돕는 추가 정보를 제공하라."
+                "단, 이용자가 이미 알고 있는 정보는 반복하지 말고, 새로운 관점이나 관련된 주제를 중심으로 안내하라."
+                "주제 자원은 최대 3개까지 제공할 수 있다."
+                "이 작업의 결과는 너가 방금 전에 생성한 응답에 추가로 덧붙여서 제공될 것이기 때문에, 이를 고려하여 자연스럽게 연결되도록 작성하라."
+            )
+            one_more_resource = await add_one_more_subject_resource(history=history, node_id=chat_message.content.strip())
+            one_more_content = f"{one_more_string}\n{one_more_resource}\n"
+            one_more_response_text = await self._generate_response(one_more_content, history)
+            chat_session_manager.add_message_to_session(session_id, 'user', one_more_content)
+            chat_session_manager.add_message_to_session(session_id, 'assistant', one_more_response_text)
+
+            response_text += "\n\n" + one_more_response_text
+            
             return ChatResponse(response=response_text, session_id=session_id)
 
         except Exception as e:
