@@ -30,6 +30,14 @@ async def chat_with_subject(
     """주제에 대한 대화를 시작합니다."""
     return await chat_service.chat_with_subject(chat_message)
 
+@router.post("/chat/discover", response_model=ChatResponse)
+async def chat_with_subject(
+    chat_message: ChatMessage,
+    chat_service = Depends(get_chat_service)
+):
+    """이용자의 추가적 탐색을 돕는 대화를 시작합니다."""
+    return await chat_service.chat_with_discover(chat_message)
+
 
 @router.get("/status", response_model=ChatbotStatus)
 async def get_chatbot_status(chat_service = Depends(get_chat_service)):

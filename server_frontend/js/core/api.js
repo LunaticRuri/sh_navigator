@@ -150,6 +150,20 @@ export class ApiClient {
             })
         });
     }
+    async sendChatRequestForDiscover(resourceId, sessionId) {
+        const url = `${this.baseUrl}/chatbot/chat/discover`;
+        return this.makeRequest(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                role: 'user',
+                content: resourceId,
+                session_id: sessionId
+            })
+        });
+    }
 
     // 공통 요청 메서드
     async makeRequest(url, options = {}) {

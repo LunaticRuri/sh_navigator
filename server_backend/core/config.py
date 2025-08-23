@@ -37,6 +37,7 @@ DB_SERVER_URL = "http://127.0.0.1:8003"
 # Gemini API Configuration
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL_PRO = "gemini-2.5-pro"
 GEMINI_MODEL_LITE = "gemini-2.5-flash-lite"
 
 # Database Connection Pool Configuration

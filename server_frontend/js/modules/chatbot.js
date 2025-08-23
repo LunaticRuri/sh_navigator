@@ -242,7 +242,7 @@ export class ChatbotModule {
         
         
         if (referenceType === 'subject') {
-            let message = `주제 ${referenceCode} ?`;
+            let message = `주제 더 알아보기 ${referenceCode} ?`;
             
             // Add user message to chat
             this.addMessage(message, 'user');
@@ -265,7 +265,7 @@ export class ChatbotModule {
             }
         }
         else if (referenceType === 'book') {
-            let message = `도서 ${referenceCode} ?`;
+            let message = `책 더 알아보기 ${referenceCode} ?`;
             
             // Add user message to chat
             this.addMessage(message, 'user');
@@ -288,6 +288,30 @@ export class ChatbotModule {
             }
             
         }
+        else if (referenceType === 'discover') {
+            let message = `추가 탐색 ${referenceCode} ?`;
+            
+            // Add user message to chat
+            this.addMessage(message, 'user');
+            
+            // Show typing indicator while waiting for response
+            this.showTypingIndicator();
+            
+            const result = await this.apiClient.sendChatRequestForDiscover(referenceCode, this.currentSessionId);
+            
+            // Remove typing indicator after response
+            this.hideTypingIndicator();
+            
+            if (result.success) {
+                // Update session ID and add bot response
+                this.currentSessionId = result.data.session_id;
+                this.addMessage(result.data.response, 'bot');
+            } else {
+                // Show error message from bot
+                this.addMessage(`오류: ${result.error}`, 'bot');
+            }
+        }
+
         else {
             console.error('알 수 없는 참조 유형:', referenceType);
             return;

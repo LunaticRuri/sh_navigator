@@ -7,7 +7,7 @@ from fastapi import HTTPException
 import google.generativeai as genai
 
 from schemas.chat import ChatMessage, ChatResponse, UserNeeds, UserNeedsAnalysis, ResourcesFromNeeds
-from chatbot.chat_pipeline import analyze_user_needs, find_resources_from_needs, find_resources_by_isbn, find_resources_by_node_id, add_one_more_subject_resource
+from chatbot.chat_pipeline import analyze_user_needs, find_resources_from_needs, find_resources_by_isbn, find_resources_by_node_id, add_one_more_resource
 from chatbot.chat_manager import chat_session_manager
 from chatbot.chat_utils import get_system_prompt
 from core.utils import format_gemini_chat_history
@@ -172,27 +172,47 @@ class ChatService:
             chat_session_manager.add_message_to_session(session_id, 'user', enhanced_content)
             chat_session_manager.add_message_to_session(session_id, 'assistant', response_text)
             
-            one_more_string = (
-                "다음은 이용자가 다양한 관점이나 창의적 지적 탐험을 할 수 있기 위해 찾은 주제 자원이다."
-                "이를 활용하여 이용자가 더 깊이 탐구할 수 있도록 돕는 추가 정보를 제공하라."
-                "단, 이용자가 이미 알고 있는 정보는 반복하지 말고, 새로운 관점이나 관련된 주제를 중심으로 안내하라."
-                "주제 자원은 최대 3개까지 제공할 수 있다."
-                "이 작업의 결과는 너가 방금 전에 생성한 응답에 추가로 덧붙여서 제공될 것이기 때문에, 이를 고려하여 자연스럽게 연결되도록 작성하라."
-            )
-            one_more_resource = await add_one_more_subject_resource(history=history, node_id=chat_message.content.strip())
-            one_more_content = f"{one_more_string}\n{one_more_resource}\n"
-            one_more_response_text = await self._generate_response(one_more_content, history)
-            chat_session_manager.add_message_to_session(session_id, 'user', one_more_content)
-            chat_session_manager.add_message_to_session(session_id, 'assistant', one_more_response_text)
-
-            response_text += "\n\n" + one_more_response_text
-            
             return ChatResponse(response=response_text, session_id=session_id)
 
         except Exception as e:
             logger.error(f"Error in chat_with_subject: {e}")
             raise HTTPException(status_code=500, detail="주제에 대한 대화 중 오류가 발생했습니다.")
     
+    async def chat_with_discover(self, chat_message: ChatMessage) -> ChatResponse:
+        """
+        Provide one more related resource or perspective.
+        Uses the chat history to generate a response.
+        """
+        if not self.is_available:
+            raise HTTPException(
+                status_code=503,
+                detail="챗봇 서비스를 사용할 수 없습니다. API 키가 설정되지 않았습니다."
+            )
+        try:
+            session_id = chat_session_manager.get_or_create_session(chat_message.session_id)
+            history = chat_session_manager.get_session_history(session_id)
+
+            if not history:
+                chat_session_manager.add_message_to_session(session_id, 'user', get_system_prompt())
+                history = chat_session_manager.get_session_history(session_id)
+
+            one_more_string = (
+                "다음은 이용자가 다양한 관점이나 창의적 지적 탐험을 할 수 있기 위해 주제명 표목 네트워크에서 찾은 주제 자원 후보이다.\n"
+                "이를 활용하여 이용자가 더 깊이 탐구할 수 있도록 돕는 추가 정보를 제공하라.\n"
+                "단, 이용자가 이미 알고 있는 정보는 반복하지 말고, 새로운 관점이나 관련된 주제를 중심으로 안내하라.\n"
+                "'subject_candidates_path'는 원래 주제와 새로운 주제 후보의 연결 경로이다. 이를 활용하여 주제간 연결됨을 설명하라.\n"
+            )
+            one_more_resource = await add_one_more_resource(history=history, resource_id=chat_message.content.strip())
+            one_more_content = f"{one_more_string}\n{one_more_resource}\n"
+            one_more_response_text = await self._generate_response(one_more_content, history)
+            chat_session_manager.add_message_to_session(session_id, 'user', one_more_content)
+            chat_session_manager.add_message_to_session(session_id, 'assistant', one_more_response_text)
+            
+            return ChatResponse(response=one_more_response_text, session_id=session_id)
+
+        except Exception as e:
+            logger.error(f"Error in chat_with_one_more_thing: {e}")
+            raise HTTPException(status_code=500, detail="추가 정보 제공 중 오류가 발생했습니다.")
 
     async def _generate_response(self, message: str, history: List[Dict]) -> str:
         """

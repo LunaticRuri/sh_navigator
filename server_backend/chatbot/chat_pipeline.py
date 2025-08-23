@@ -1,4 +1,4 @@
-from core.config import GEMINI_API_KEY, GEMINI_MODEL, MAX_QUERY_LENGTH, MODEL_SERVER_URL, NETWORK_SERVER_URL
+from core.config import GEMINI_API_KEY, GEMINI_MODEL, GEMINI_MODEL_LITE, GEMINI_MODEL_PRO, MAX_QUERY_LENGTH, MODEL_SERVER_URL, NETWORK_SERVER_URL
 from schemas.search import BookResponse, SubjectResponse
 from schemas.chat import UserNeeds,UserNeedsAnalysis, ResourcesFromNeeds
 from core.utils import truncate_string
@@ -228,6 +228,78 @@ async def _get_related_books_by_subject(node_id: str, limit: int = 10) -> List[B
         logger.error(f"Error retrieving related books for subject {node_id}: {e}")
         raise ValueError(f"Failed to retrieve related books for subject {node_id}: {e}")
 
+async def _get_shortest_path_between_subjects(source_id: str, target_id: str) -> List[dict]:
+    http_client = httpx.AsyncClient(timeout=10.0)
+    try:
+        response = await http_client.get(
+            f"{NETWORK_SERVER_URL}/path/shortest",
+            params={"source_id": source_id, "target_id": target_id}
+        )
+        response.raise_for_status()
+        path_data = response.json()
+        return path_data.get("path", [])
+    except Exception as e:
+        logger.error(f"Error retrieving shortest path between {source_id} and {target_id}: {e}")
+        raise RuntimeError(f"Failed to retrieve shortest path: {e}")
+
+# TODO: IMPORTANT!! Implement filtering logic to fasten the response time
+async def _filter_resources(filtering_instruction:str, resources:list, limit: int) -> list:
+    if len(resources) <= limit:
+        return resources
+    
+    filtering_instruction += (
+        f"\n다음은 {len(resources)}개의 후보들이다. 이 중에서 최대 {limit}개를 선택하라.\n"
+        "내용을 판단할 때는 'resource'를 고려하고, selected_indices라는 키에 선택된 후보의 'index'를 배열로 담아라.\n"
+        "예시: {\"selected_indices\": [0, 2]}"
+    )
+    resources_with_numbering = [{'index':idx, 'resource': resource} for idx, resource in enumerate(resources)]
+
+    filtering_model = genai.GenerativeModel(
+        GEMINI_MODEL_LITE,
+        system_instruction=filtering_instruction
+    )
+    
+    filtering_config = genai.GenerationConfig(
+        response_mime_type="application/json",
+        response_schema=Schema(
+            type = Type.OBJECT,
+            required = ["selected_indices"],
+            properties = {
+                "selected_indices": Schema(
+                    type = Type.ARRAY,
+                    items = Schema(
+                        type = Type.INTEGER,
+                    ),
+                    min_items=1,
+                    max_items=limit
+                )
+            }
+        )
+    )
+    
+    try:
+        response = await filtering_model.generate_content_async(
+            contents=[json.dumps(resources_with_numbering, ensure_ascii=False, indent=2)],
+            generation_config=filtering_config
+        )
+        logger.info(f"Response from Gemini for filtering: {response.text}")
+        response_json = json.loads(response.text)
+        
+        selected_indices = response_json.get("selected_indices", [])
+        if not selected_indices:
+            raise ValueError("No indices selected in filtering response.")
+        
+        # Validate indices and filter resources
+        if not all(isinstance(idx, int) and 0 <= idx < len(resources) for idx in selected_indices):
+            raise ValueError("Invalid indices in filtering response.")
+
+        filtered_resources = [resources[idx] for idx in set(selected_indices) if 0 <= idx < len(resources)]
+        return filtered_resources
+
+    except Exception as e:
+        logger.error(f"Error during resource filtering: {e}")
+        return resources[:limit]  # Fallback to returning the first 'limit' resources
+
 async def analyze_user_needs(user_input: str) -> UserNeedsAnalysis:
 
     contents = [user_input]
@@ -276,10 +348,6 @@ async def find_resources_from_needs(user_needs: UserNeeds) -> ResourcesFromNeeds
         books=book_candidates,
         subjects=subject_candidates
     )      
-
-async def filter_resources():
-    ... # Implement filtering logic if needed
-
 
 async def find_resources_by_isbn(isbn: str) -> str:
     try:
@@ -362,11 +430,14 @@ async def find_resources_by_node_id(node_id: str) -> str:
         raise RuntimeError(f"Subject not found: {e}")
 
 
-# TODO: Implement additional resource retrieval logic if needed
-async def add_one_more_subject_resource(history, node_id: str = None) -> dict:
-    if node_id:
-        subject_metadata = await _get_subject_by_node_id(node_id)
-        subject_metadata_str = f"주제 정보: {subject_metadata}\n" if subject_metadata.definition else ""
+async def add_one_more_resource(history, resource_id: str = None) -> dict:
+    if resource_id:
+        if resource_id.startswith("nlk:"):
+            resource_metadata = await _get_subject_by_node_id(resource_id)
+            resource_metadata_str = f"주제 정보: {resource_metadata}\n" if resource_metadata.definition else ""
+        else:
+            resource_metadata = await _get_book_by_isbn(resource_id)
+            resource_metadata_str = f"책 정보: {resource_metadata}\n" if resource_metadata.intro else ""
     
     history_str = f"대화 기록: {history}\n"
     one_more_subject_config = genai.GenerationConfig(
@@ -389,8 +460,8 @@ async def add_one_more_subject_resource(history, node_id: str = None) -> dict:
         )
     )
     one_more_subject_instruction = (
-        "사용자의 대화 기록과 주제 정보 등 여러 맥락을 바탕으로, 이용자에게 다양한 관점이나 창의적인 접근을 제공할 수 있는 추가적인 주제 정보를 찾아보자\n"
-        "단, 주제 정보가 주어지는 경우에는 이를 우선하여 고려하여야 한다.\n"
+        "사용자의 대화 기록과 주제 정보, 책 정보 등 여러 맥락을 바탕으로, 이용자에게 다양한 관점이나 창의적인 접근을 제공할 수 있는 추가적인 주제 정보를 찾아보자\n"
+        "단, 주제 정보나 책 정보가 주어지는 경우에는 이를 우선하여 고려하여야 한다.\n"
         "예시1: 인공지능에 대한 맥락이 있다면, '인공지능의 윤리적 측면'이나 '인공지능과 예술' 같은 추가적인 주제를 제안할 수 있다.\n"
         "예시2: 애니메이션 회사 픽사에 대한 맥락이 있다면, 픽사 애니메이션의 인트로에 나오는 램프의 기능주의 디자인과 관련된 주제를 제안할 수 있다.\n"
         "예시3: 수학의 해석학에 대한 맥락이 있다면, 철학에서의 해석학에 대한 주제를 제안할 수 있다.\n"
@@ -398,12 +469,12 @@ async def add_one_more_subject_resource(history, node_id: str = None) -> dict:
     )
 
     one_more_subject_model = genai.GenerativeModel(
-        GEMINI_MODEL,
+        GEMINI_MODEL_PRO,
         system_instruction=one_more_subject_instruction
     )
     try:
         response = await one_more_subject_model.generate_content_async(
-            contents=[subject_metadata_str, history_str],
+            contents=[resource_metadata_str, history_str],
             generation_config=one_more_subject_config
         )
         logger.info(f"Response from Gemini for one more subject: {response.text}")
@@ -417,15 +488,41 @@ async def add_one_more_subject_resource(history, node_id: str = None) -> dict:
         
         keywords_str = ', '.join(keywords)
         subject_candidates = await _find_subject_candidates_by_needs(keywords_str)
-        
-        return {
-            "description": description,
-            "keywords": keywords,
-            "subject_candidates": subject_candidates
-        }
-        
+        filtering_instruction = (
+            f"주제 후보를 3개 이하로 줄여라. 주제 후보는 다음의 주제 추천에 도움이 되는 것이어야 한다. 또한 중복되면 안된다.\n"
+            f"추천 설명: {description}\n"
+            f"키워드: {keywords_str}\n"
+        )
+        subject_candidates = await _filter_resources(filtering_instruction, subject_candidates, 3)
+
+        subject_candidates_path = []
+        if resource_id and resource_id.startswith("nlk:") and resource_metadata:
+            # Find shortest path between the new subject candidates and the given subject
+            for subject in subject_candidates:
+                subject_path = {"source": resource_metadata, "path": []}
+                if subject.node_id != resource_id:
+                    try:
+                        path = await _get_shortest_path_between_subjects(resource_id, subject.node_id)
+                        if path:
+                            for step_id in path:
+                                metadata = await _get_subject_by_node_id(step_id)
+                                subject_path["path"].append(metadata)
+                            subject_candidates_path.append(subject_path)
+                            continue
+                    except Exception as e:
+                        logger.error(f"Error finding shortest path between {resource_id} and {subject.node_id}: {e}")
+                        continue
+
     except Exception as e:
         raise RuntimeError(f"Failed to generate additional subject content: {e}")
+    
+    return {
+            "description": description,
+            "keywords": keywords,
+            "subject_candidates": subject_candidates,
+            "subject_candidates_path": subject_candidates_path
+        }
+    
 
 
 if __name__ == "__main__":
