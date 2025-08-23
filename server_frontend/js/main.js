@@ -16,6 +16,19 @@ let navigationComponent;
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', function () {
+    // Mermaid 초기화
+    if (window.mermaid) {
+        window.mermaid.initialize({ 
+            startOnLoad: false,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true
+            }
+        });
+    }
+    
     // 모듈 인스턴스 생성
     bookSearchModule = new BookSearchModule();
     subjectSearchModule = new SubjectSearchModule();

@@ -154,14 +154,28 @@ export class ChatbotModule {
         messageDiv.appendChild(timeDiv);
         messagesContainer.appendChild(messageDiv);
         
-        // Render math equations for bot messages
-        if (role === 'bot' && window.MathJax) {
-            MathJax.typesetPromise([contentDiv]).then(() => {
+        // Render math equations and mermaid diagrams for bot messages
+        if (role === 'bot') {
+            // Render Mermaid diagrams first
+            if (window.mermaid && contentDiv.querySelector('.mermaid')) {
+                try {
+                    window.mermaid.init(undefined, contentDiv.querySelectorAll('.mermaid'));
+                } catch (error) {
+                    console.log('Mermaid rendering error:', error);
+                }
+            }
+            
+            // Then render MathJax
+            if (window.MathJax) {
+                MathJax.typesetPromise([contentDiv]).then(() => {
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }).catch((err) => {
+                    console.log('MathJax rendering error:', err);
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                });
+            } else {
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            }).catch((err) => {
-                console.log('MathJax rendering error:', err);
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            });
+            }
         } else {
             // Scroll to bottom after adding message
             messagesContainer.scrollTop = messagesContainer.scrollHeight;

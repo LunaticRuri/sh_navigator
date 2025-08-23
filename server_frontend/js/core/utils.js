@@ -114,7 +114,10 @@ export function renderMarkdown(text) {
             breaks: true,
             gfm: true,
         });
-        return marked.parse(text);
+        
+        // Mermaid 다이어그램 처리
+        const htmlContent = marked.parse(text);
+        return processMermaidDiagrams(htmlContent);
     } else {
         return text
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -122,6 +125,16 @@ export function renderMarkdown(text) {
             .replace(/`(.*?)`/g, '<code>$1</code>')
             .replace(/\n/g, '<br>');
     }
+}
+
+// Mermaid 다이어그램을 처리하는 함수
+function processMermaidDiagrams(html) {
+    // ```mermaid로 감싸진 코드 블록을 찾아서 mermaid div로 변환
+    return html.replace(/<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g, (match, diagramCode) => {
+        const cleanCode = diagramCode.trim();
+        const diagramId = 'mermaid-' + Math.random().toString(36).substr(2, 9);
+        return `<div class="mermaid" id="${diagramId}">${cleanCode}</div>`;
+    });
 }
 
 // @로 둘러싸인 패턴을 링크로 변환하는 함수

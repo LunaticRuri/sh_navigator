@@ -360,3 +360,34 @@
         transform: translateY(0);
     }
 }
+
+/* Mermaid 다이어그램 스타일 */
+.message-content .mermaid {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 12px 0;
+    max-width: 100%;
+    overflow-x: auto;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.message-content .mermaid svg {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Mermaid 다이어그램의 텍스트 색상을 어둡게 */
+.message-content .mermaid text {
+    fill: #333 !important;
+}
+
+/* Mermaid 다이어그램의 노드 스타일 */
+.message-content .mermaid .node rect,
+.message-content .mermaid .node circle,
+.message-content .mermaid .node ellipse,
+.message-content .mermaid .node polygon {
+    stroke: #333 !important;
+    stroke-width: 2px !important;
+}
