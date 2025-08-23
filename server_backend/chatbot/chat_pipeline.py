@@ -1,6 +1,10 @@
-from core.config import GEMINI_API_KEY, GEMINI_MODEL, GEMINI_MODEL_LITE, GEMINI_MODEL_PRO, MAX_QUERY_LENGTH, MODEL_SERVER_URL, NETWORK_SERVER_URL
+# Import necessary modules and configuration variables
+from core.config import (
+    GEMINI_API_KEY, GEMINI_MODEL, GEMINI_MODEL_LITE, GEMINI_MODEL_PRO,
+    MAX_QUERY_LENGTH, MODEL_SERVER_URL, NETWORK_SERVER_URL
+)
 from schemas.search import BookResponse, SubjectResponse
-from schemas.chat import UserNeeds,UserNeedsAnalysis, ResourcesFromNeeds
+from schemas.chat import UserNeeds, UserNeedsAnalysis, ResourcesFromNeeds
 from core.utils import truncate_string
 from database.database_manager import get_database_manager
 import httpx
@@ -12,38 +16,29 @@ from google.generativeai.protos import Schema, Type
 
 logger = logging.getLogger(__name__)
 
-
+# Configure Gemini API key
 genai.configure(api_key=GEMINI_API_KEY)
 
+# Define generation config for user needs analysis
 user_needs_analysis_config = genai.GenerationConfig(
     response_mime_type="application/json",
     response_schema=Schema(
-        type = Type.OBJECT,
-        required = ["needs_exist"],
-        properties = {
-            "needs_exist": Schema(
-                type = Type.BOOLEAN,
-            ),
+        type=Type.OBJECT,
+        required=["needs_exist"],
+        properties={
+            "needs_exist": Schema(type=Type.BOOLEAN),
             "needs": Schema(
-                type = Type.ARRAY,
-                items = Schema(
-                    type = Type.OBJECT,
-                    required = ["subject", "predicate", "object", "keywords"],
-                    properties = {
-                        "subject": Schema(
-                            type = Type.STRING,
-                        ),
-                        "predicate": Schema(
-                            type = Type.STRING,
-                        ),
-                        "object": Schema(
-                            type = Type.STRING,
-                        ),
+                type=Type.ARRAY,
+                items=Schema(
+                    type=Type.OBJECT,
+                    required=["subject", "predicate", "object", "keywords"],
+                    properties={
+                        "subject": Schema(type=Type.STRING),
+                        "predicate": Schema(type=Type.STRING),
+                        "object": Schema(type=Type.STRING),
                         "keywords": Schema(
-                            type = Type.ARRAY,
-                            items = Schema(
-                                type = Type.STRING,
-                            ),
+                            type=Type.ARRAY,
+                            items=Schema(type=Type.STRING),
                             min_items=4  # Ensure at least 4 keywords are provided
                         ),
                     },
@@ -53,22 +48,25 @@ user_needs_analysis_config = genai.GenerationConfig(
     ),
 )
 
+# System instruction for Gemini model to analyze user needs
 user_needs_analysis_system_instruction = (
-        "너는 이용자의 입력을 받아 정보 요구를 추출하는 일을 한다.\n"
-        "일은 다음의 순서에 따라 처리하자.\n"
-        "1. 우선 입력에 명시적, 암시적으로 드러나는 정보요구가 있으면 needs_exist가 true, 없으면 false이다.\n"
-        "2. 만약 needs_exist가 False이면, 여기서 일을 종료하면 됨. (즉 needs 는 비워둬야 함)\n"
-        "3. 만약 needs_exist가 true이면, 사용자의 입력에서 알 수 있는 모든 정보 요구를 파악하자. 정보요구는 여러개 있을 수 있음.\n"
-        "4. 파악된 정보요구들을 RDF 트리플(subject, predicate, object)로 나타내자.\n"
-        "5. 그 정보요구를 해결하기 위해 필요한 내용이 뭔지를 생각해두자.\n" 
-        "6. 필요한 내용에 관련된 '책'이나 '주제명 표목'을 찾는 데에 도움이 될만한 키워드(단어 또는 구)를 최소한 3개 이상 keywords에 나타내자."
-    )
+    "너는 이용자의 입력을 받아 정보 요구를 추출하는 일을 한다.\n"
+    "일은 다음의 순서에 따라 처리하자.\n"
+    "1. 우선 입력에 명시적, 암시적으로 드러나는 정보요구가 있으면 needs_exist가 true, 없으면 false이다.\n"
+    "2. 만약 needs_exist가 False이면, 여기서 일을 종료하면 됨. (즉 needs 는 비워둬야 함)\n"
+    "3. 만약 needs_exist가 true이면, 사용자의 입력에서 알 수 있는 모든 정보 요구를 파악하자. 정보요구는 여러개 있을 수 있음.\n"
+    "4. 파악된 정보요구들을 RDF 트리플(subject, predicate, object)로 나타내자.\n"
+    "5. 그 정보요구를 해결하기 위해 필요한 내용이 뭔지를 생각해두자.\n"
+    "6. 필요한 내용에 관련된 '책'이나 '주제명 표목'을 찾는 데에 도움이 될만한 키워드(단어 또는 구)를 최소한 3개 이상 keywords에 나타내자."
+)
 
+# Initialize Gemini model for user needs analysis
 user_needs_analysis_model = genai.GenerativeModel(
     GEMINI_MODEL,
     system_instruction=user_needs_analysis_system_instruction
 )
 
+# Helper function: Convert DB row to BookResponse model
 def _row_to_book_response(row) -> BookResponse:
     return BookResponse(
         isbn=row["isbn"],
@@ -80,6 +78,7 @@ def _row_to_book_response(row) -> BookResponse:
         nlk_subjects=row["nlk_subjects"]
     )
 
+# Helper function: Convert DB row to SubjectResponse model
 def _row_to_subject_response(row) -> SubjectResponse:
     return SubjectResponse(
         node_id=row["node_id"],
@@ -87,11 +86,10 @@ def _row_to_subject_response(row) -> SubjectResponse:
         definition=row["definition"]
     )
 
-async def _find_book_candidates_by_needs(keywords_str : str) -> List[BookResponse]:
+# Search for book candidates using keywords
+async def _find_book_candidates_by_needs(keywords_str: str) -> List[BookResponse]:
     http_client = httpx.AsyncClient(timeout=10.0)
-
     query = truncate_string(keywords_str, MAX_QUERY_LENGTH)
-    
     response = await http_client.post(
         f"{MODEL_SERVER_URL}/search/books",
         json={"query": query, "limit": 10}
@@ -99,38 +97,29 @@ async def _find_book_candidates_by_needs(keywords_str : str) -> List[BookRespons
     response.raise_for_status()
     search_data = response.json()
     retrieved_isbns = search_data.get("retrieved_isbns", [])
-    
+
     db_manager = get_database_manager()
     async with db_manager.get_connection() as conn:
         cursor = await conn.cursor()
-        
+        # Query books by retrieved ISBNs
         query = """
             SELECT isbn, title, kdc, publication_year, intro, toc, nlk_subjects 
             FROM books 
             WHERE isbn IN ({})
             LIMIT ?
         """.format(','.join('?' for _ in retrieved_isbns))
-        
         await cursor.execute(query, (*retrieved_isbns, 10))
         books_data = await cursor.fetchall()
-        
-    # Sort results to match FAISS order
-    books_data = sorted(
-        books_data, 
-        key=lambda x: retrieved_isbns.index(x[0])
-    )
 
-    # Convert DB rows to response models
+    # Sort results to match FAISS order
+    books_data = sorted(books_data, key=lambda x: retrieved_isbns.index(x[0]))
     books = [_row_to_book_response(row) for row in books_data]
-        
     return books
 
+# Search for subject candidates using keywords
 async def _find_subject_candidates_by_needs(query) -> List[SubjectResponse]:
-    
     http_client = httpx.AsyncClient(timeout=10.0)
     db_manager = get_database_manager()
-    
-    # Get subject-related subjects
     response = await http_client.post(
         f"{MODEL_SERVER_URL}/search/subjects",
         json={"query": query, "limit": 10}
@@ -139,10 +128,8 @@ async def _find_subject_candidates_by_needs(query) -> List[SubjectResponse]:
     search_data = response.json()
     retrieved_node_ids = search_data.get("retrieved_node_ids", [])
 
-    
     async with db_manager.get_connection() as conn:
         cursor = await conn.cursor()
-        
         query = """
             SELECT node_id, label, definition 
             FROM subjects 
@@ -150,21 +137,16 @@ async def _find_subject_candidates_by_needs(query) -> List[SubjectResponse]:
             LIMIT ?
         """.format(','.join('?' for _ in retrieved_node_ids))
         await cursor.execute(query, (*retrieved_node_ids, 10))
-        
         subjects_data = await cursor.fetchall()
-    
-    # Sort results to match FAISS order
-    subjects_data = sorted(
-        subjects_data, 
-        key=lambda x: retrieved_node_ids.index(x[0])
-    )
 
+    # Sort results to match FAISS order
+    subjects_data = sorted(subjects_data, key=lambda x: retrieved_node_ids.index(x[0]))
     subjects = [_row_to_subject_response(row) for row in subjects_data]
     return subjects
 
+# Retrieve book metadata by ISBN
 async def _get_book_by_isbn(isbn: str) -> BookResponse:
     db_manager = get_database_manager()
-    
     async with db_manager.get_connection() as conn:
         cursor = await conn.cursor()
         await cursor.execute(
@@ -172,15 +154,14 @@ async def _get_book_by_isbn(isbn: str) -> BookResponse:
             (isbn,)
         )
         row = await cursor.fetchone()
-        
     if row:
         return _row_to_book_response(row)
     else:
         raise ValueError(f"Book with ISBN {isbn} not found.")
-    
+
+# Retrieve subject metadata by node_id
 async def _get_subject_by_node_id(node_id: str) -> SubjectResponse:
     db_manager = get_database_manager()
-    
     async with db_manager.get_connection() as conn:
         cursor = await conn.cursor()
         await cursor.execute(
@@ -188,12 +169,12 @@ async def _get_subject_by_node_id(node_id: str) -> SubjectResponse:
             (node_id,)
         )
         row = await cursor.fetchone()
-        
     if row:
         return _row_to_subject_response(row)
     else:
         raise ValueError(f"Subject with node_id {node_id} not found.")
 
+# Get books related to a subject by node_id
 async def _get_related_books_by_subject(node_id: str, limit: int = 10) -> List[BookResponse]:
     db_manager = get_database_manager()
     try:
@@ -201,33 +182,25 @@ async def _get_related_books_by_subject(node_id: str, limit: int = 10) -> List[B
             cursor = await conn.cursor()
             query = "SELECT isbn FROM book_subject_index WHERE node_id = ?"
             await cursor.execute(query, (node_id,))
-            
             retrieved_isbns = await cursor.fetchall()
             if not retrieved_isbns:
                 return []
-
-            # Flatten the list of tuples to a list of ISBNs
+            # Flatten list of tuples to list of ISBNs
             retrieved_isbns = [row[0] for row in retrieved_isbns]
-            
-            # Query for book details by ISBNs
+            # Query book details by ISBNs
             query = """
             SELECT isbn, title, kdc, publication_year, intro, toc, nlk_subjects FROM books 
             WHERE isbn IN ({}) ORDER BY publication_year DESC LIMIT ?
             """.format(','.join('?' for _ in retrieved_isbns))
-
             await cursor.execute(query, (*retrieved_isbns, limit))
-
             books_data = await cursor.fetchall()
-
-            # Convert DB rows to response models
             books = [_row_to_book_response(row) for row in books_data]
-
             return books
-
     except Exception as e:
         logger.error(f"Error retrieving related books for subject {node_id}: {e}")
         raise ValueError(f"Failed to retrieve related books for subject {node_id}: {e}")
 
+# Get shortest path between two subjects in the network
 async def _get_shortest_path_between_subjects(source_id: str, target_id: str) -> List[dict]:
     http_client = httpx.AsyncClient(timeout=10.0)
     try:
@@ -242,41 +215,35 @@ async def _get_shortest_path_between_subjects(source_id: str, target_id: str) ->
         logger.error(f"Error retrieving shortest path between {source_id} and {target_id}: {e}")
         raise RuntimeError(f"Failed to retrieve shortest path: {e}")
 
-# TODO: IMPORTANT!! Implement filtering logic to fasten the response time
-async def _filter_resources(filtering_instruction:str, resources:list, limit: int) -> list:
+# Filter resources using Gemini model to reduce response time
+async def _filter_resources(filtering_instruction: str, resources: list, limit: int) -> list:
     if len(resources) <= limit:
         return resources
-    
     filtering_instruction += (
         f"\n다음은 {len(resources)}개의 후보들이다. 이 중에서 최대 {limit}개를 선택하라.\n"
         "내용을 판단할 때는 'resource'를 고려하고, selected_indices라는 키에 선택된 후보의 'index'를 배열로 담아라.\n"
         "예시: {\"selected_indices\": [0, 2]}"
     )
-    resources_with_numbering = [{'index':idx, 'resource': resource} for idx, resource in enumerate(resources)]
-
+    resources_with_numbering = [{'index': idx, 'resource': str(resource)} for idx, resource in enumerate(resources)]
     filtering_model = genai.GenerativeModel(
         GEMINI_MODEL_LITE,
         system_instruction=filtering_instruction
     )
-    
     filtering_config = genai.GenerationConfig(
         response_mime_type="application/json",
         response_schema=Schema(
-            type = Type.OBJECT,
-            required = ["selected_indices"],
-            properties = {
+            type=Type.OBJECT,
+            required=["selected_indices"],
+            properties={
                 "selected_indices": Schema(
-                    type = Type.ARRAY,
-                    items = Schema(
-                        type = Type.INTEGER,
-                    ),
+                    type=Type.ARRAY,
+                    items=Schema(type=Type.INTEGER),
                     min_items=1,
                     max_items=limit
                 )
             }
         )
     )
-    
     try:
         response = await filtering_model.generate_content_async(
             contents=[json.dumps(resources_with_numbering, ensure_ascii=False, indent=2)],
@@ -284,24 +251,21 @@ async def _filter_resources(filtering_instruction:str, resources:list, limit: in
         )
         logger.info(f"Response from Gemini for filtering: {response.text}")
         response_json = json.loads(response.text)
-        
         selected_indices = response_json.get("selected_indices", [])
         if not selected_indices:
             raise ValueError("No indices selected in filtering response.")
-        
         # Validate indices and filter resources
         if not all(isinstance(idx, int) and 0 <= idx < len(resources) for idx in selected_indices):
             raise ValueError("Invalid indices in filtering response.")
-
         filtered_resources = [resources[idx] for idx in set(selected_indices) if 0 <= idx < len(resources)]
         return filtered_resources
-
     except Exception as e:
         logger.error(f"Error during resource filtering: {e}")
+        logger.error(f"Resources: {resources_with_numbering}")
         return resources[:limit]  # Fallback to returning the first 'limit' resources
 
+# Analyze user input to extract information needs using Gemini
 async def analyze_user_needs(user_input: str) -> UserNeedsAnalysis:
-
     contents = [user_input]
     try:
         response = await user_needs_analysis_model.generate_content_async(
@@ -310,14 +274,10 @@ async def analyze_user_needs(user_input: str) -> UserNeedsAnalysis:
         )
         logger.info(f"Response from Gemini: {response.text}")
         response_json = json.loads(response.text)
-        
         needs_exist = response_json.get("needs_exist", False)
         needs = response_json.get("needs", [])
         if not needs_exist:
-            return UserNeedsAnalysis(
-                needs_exist=False,
-                needs=[]
-            )
+            return UserNeedsAnalysis(needs_exist=False, needs=[])
         else:
             return UserNeedsAnalysis(
                 needs_exist=True,
@@ -332,27 +292,30 @@ async def analyze_user_needs(user_input: str) -> UserNeedsAnalysis:
             )
     except Exception as e:
         raise RuntimeError(f"Failed to generate content: {e}")
-    
+
+# Find resources (books and subjects) based on user needs
 async def find_resources_from_needs(user_needs: UserNeeds) -> ResourcesFromNeeds:
-    
     book_candidates = []
     subject_candidates = []
-    
     keywords_str = ', '.join(user_needs.keywords)
     book_candidates.extend(await _find_book_candidates_by_needs(keywords_str))
-    
-    # TODO: Need to improve the subject search logic (RDF triples)
+    # TODO: Improve subject search logic (RDF triples)
     subject_candidates.extend(await _find_subject_candidates_by_needs(keywords_str))
-    
+    filtering_instruction = (
+        f"주제 후보를 5개 이하로 줄여라. 주제 후보는 아래 사용자 정보 요구에 도움되는 것이어야 한다. 또한 중복되면 안된다.\n"
+        f"정보요구 설명: {user_needs.subject_} {user_needs.predicate_} {user_needs.object_}\n"
+        f"정보요구 키워드: {keywords_str}\n"
+    )
+    subject_candidates = await _filter_resources(filtering_instruction, subject_candidates, 5)
     return ResourcesFromNeeds(
         books=book_candidates,
         subjects=subject_candidates
-    )      
+    )
 
+# Find resources by ISBN and return formatted string
 async def find_resources_by_isbn(isbn: str) -> str:
     try:
         book_metadata = await _get_book_by_isbn(isbn)
-
         if not book_metadata.nlk_subjects:
             resource_str = f'책 정보: \n {book_metadata}'
         else:
@@ -368,22 +331,22 @@ async def find_resources_by_isbn(isbn: str) -> str:
             if not subject_list:
                 resource_str = f'책 정보: \n {book_metadata}'
             else:
-                subject_str = '\n'.join([f"주제: {subject.label} ID: {subject.node_id}, 정의:{subject.definition}" for subject in subject_list])
+                subject_str = '\n'.join([
+                    f"주제: {subject.label} ID: {subject.node_id}, 정의:{subject.definition}"
+                    for subject in subject_list
+                ])
                 resource_str = f"책 정보: \n{book_metadata}\n\n관련 주제:\n{subject_str}"
-
         return resource_str
-    
     except ValueError as e:
         raise RuntimeError(f"Metadata not found: {e}")
 
+# Find resources by subject node_id and return formatted string
 async def find_resources_by_node_id(node_id: str) -> str:
     try:
         subject_metadata = await _get_subject_by_node_id(node_id)
         related_books = await _get_related_books_by_subject(node_id)
-
         http_client = httpx.AsyncClient(timeout=10.0)
-    
-        # Get subject-related subjects
+        # Get subject-related subjects (neighbors)
         response = await http_client.get(
             f"{NETWORK_SERVER_URL}/node/neighbors",
             params={"node_id": node_id}
@@ -392,7 +355,6 @@ async def find_resources_by_node_id(node_id: str) -> str:
         search_data = response.json()
         nodes = search_data.get("nodes", [])
         edges = search_data.get("edges", [])
-
         relations = []
         for edge in edges:
             for node in nodes:
@@ -415,21 +377,17 @@ async def find_resources_by_node_id(node_id: str) -> str:
                             "target_label": node['label'],
                             "relation_type": edge['relation_type']
                         })
-
         resource_str = f"주제 정보: \n{subject_metadata}\n\n"
-
         if related_books:
             resource_str += f"관련 책:\n {related_books}\n\n"
-        
         if relations:
             resource_str += "관련 주제 관계:\n"
             resource_str += json.dumps(relations, ensure_ascii=False, indent=2)
         return resource_str
-    
     except ValueError as e:
         raise RuntimeError(f"Subject not found: {e}")
 
-
+# Suggest one more resource based on conversation history and resource context
 async def add_one_more_resource(history, resource_id: str = None) -> dict:
     if resource_id:
         if resource_id.startswith("nlk:"):
@@ -438,22 +396,17 @@ async def add_one_more_resource(history, resource_id: str = None) -> dict:
         else:
             resource_metadata = await _get_book_by_isbn(resource_id)
             resource_metadata_str = f"책 정보: {resource_metadata}\n" if resource_metadata.intro else ""
-    
     history_str = f"대화 기록: {history}\n"
     one_more_subject_config = genai.GenerationConfig(
         response_mime_type="application/json",
         response_schema=Schema(
-            type = Type.OBJECT,
-            required = ["description", "keywords"],
-            properties = {
-                "description": Schema(
-                    type = Type.STRING
-                ),
+            type=Type.OBJECT,
+            required=["description", "keywords"],
+            properties={
+                "description": Schema(type=Type.STRING),
                 "keywords": Schema(
-                    type = Type.ARRAY,
-                    items = Schema(
-                        type = Type.STRING
-                    ),
+                    type=Type.ARRAY,
+                    items=Schema(type=Type.STRING),
                     min_items=4  # Ensure at least 4 keywords are provided
                 )
             }
@@ -467,7 +420,6 @@ async def add_one_more_resource(history, resource_id: str = None) -> dict:
         "예시3: 수학의 해석학에 대한 맥락이 있다면, 철학에서의 해석학에 대한 주제를 제안할 수 있다.\n"
         "description에는 추가적인 주제 선정 이유를 작성하고, keywords에는 그 주제를 찾는 데에 도움이 될만한 키워드(단어 또는 구)를 최소한 4개 이상 나타내자."
     )
-
     one_more_subject_model = genai.GenerativeModel(
         GEMINI_MODEL_PRO,
         system_instruction=one_more_subject_instruction
@@ -479,13 +431,10 @@ async def add_one_more_resource(history, resource_id: str = None) -> dict:
         )
         logger.info(f"Response from Gemini for one more subject: {response.text}")
         response_json = json.loads(response.text)
-        
         description = response_json.get("description", "")
         keywords = response_json.get("keywords", [])
-        
         if not description or not keywords:
             raise ValueError("Incomplete response from Gemini for additional subject.")
-        
         keywords_str = ', '.join(keywords)
         subject_candidates = await _find_subject_candidates_by_needs(keywords_str)
         filtering_instruction = (
@@ -494,7 +443,6 @@ async def add_one_more_resource(history, resource_id: str = None) -> dict:
             f"키워드: {keywords_str}\n"
         )
         subject_candidates = await _filter_resources(filtering_instruction, subject_candidates, 3)
-
         subject_candidates_path = []
         if resource_id and resource_id.startswith("nlk:") and resource_metadata:
             # Find shortest path between the new subject candidates and the given subject
@@ -512,19 +460,16 @@ async def add_one_more_resource(history, resource_id: str = None) -> dict:
                     except Exception as e:
                         logger.error(f"Error finding shortest path between {resource_id} and {subject.node_id}: {e}")
                         continue
-
     except Exception as e:
         raise RuntimeError(f"Failed to generate additional subject content: {e}")
-    
     return {
-            "description": description,
-            "keywords": keywords,
-            "subject_candidates": subject_candidates,
-            "subject_candidates_path": subject_candidates_path
-        }
-    
+        "description": description,
+        "keywords": keywords,
+        "subject_candidates": subject_candidates,
+        "subject_candidates_path": subject_candidates_path
+    }
 
-
+# Example usage for testing
 if __name__ == "__main__":
     user_input = "나는 서울의 역사에 대해 알고 싶어."
     result = analyze_user_needs(user_input)

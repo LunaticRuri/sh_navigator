@@ -11,10 +11,9 @@ from chatbot.chat_pipeline import analyze_user_needs, find_resources_from_needs,
 from chatbot.chat_manager import chat_session_manager
 from chatbot.chat_utils import get_system_prompt
 from core.utils import format_gemini_chat_history
-from core.config import GEMINI_API_KEY, GEMINI_MODEL, GEMINI_MODEL_LITE
+from core.config import GEMINI_API_KEY, GEMINI_MODEL
 
 logger = logging.getLogger(__name__)
-
 
 class ChatService:
     """Service class for chatbot operations."""
@@ -32,7 +31,6 @@ class ChatService:
             try:
                 genai.configure(api_key=GEMINI_API_KEY)
                 self.model = genai.GenerativeModel(GEMINI_MODEL)
-                self.lite_model = genai.GenerativeModel(GEMINI_MODEL_LITE)
                 self.is_available = True
                 logger.info("Gemini API initialized successfully")
             except Exception as e:
@@ -58,6 +56,7 @@ class ChatService:
             session_id = chat_session_manager.get_or_create_session(chat_message.session_id)
             history = chat_session_manager.get_session_history(session_id)
             
+            # If session is new, add system prompt
             if not history:
                 chat_session_manager.add_message_to_session(session_id, 'user', get_system_prompt())
                 history = chat_session_manager.get_session_history(session_id)
@@ -71,13 +70,13 @@ class ChatService:
                 chat_session_manager.add_message_to_session(session_id, 'assistant', response_text)
                 return ChatResponse(response=response_text, session_id=session_id)
             
-            # TODO: Temporary logic, should be improved for production
-            
+            # For each detected need, find related resources and build response text
             resource_text = ""
             for need in needs_analysis.needs:
                 resource_from_needs: ResourcesFromNeeds = await find_resources_from_needs(need)
                 resource_text += f"<요구분석 내용> -> {need} \n 관련 책과 주제명 표목 -> {resource_from_needs}\n\n"
 
+            # Enhance user content with resource information for better response
             enhanced_content = (
                 f"{chat_message.content}\n"
                 f"아래는 사용자 요구 분석 결과와 그에 따른 관련 책과 주제명 표목이다. 이를 활용하여 사용자의 정보요구를 해결하고, 지적 탐험을 도와라.\n"
@@ -114,16 +113,18 @@ class ChatService:
             session_id = chat_session_manager.get_or_create_session(chat_message.session_id)
             history = chat_session_manager.get_session_history(session_id)
 
+            # If session is new, add system prompt
             if not history:
                 chat_session_manager.add_message_to_session(session_id, 'user', get_system_prompt())
                 history = chat_session_manager.get_session_history(session_id)
 
-            # Generate response using the book context
+            # Try to find book information by ISBN
             try:
                 resoruce_str = await find_resources_by_isbn(chat_message.content.strip())
             except RuntimeError as e:
                 logger.error(f"Error finding book by ISBN: {e}")
 
+            # Build enhanced content for Gemini response
             enhanced_content = (
                 f"사용자에게 주어진 정보를 바탕으로 책을 소개하라. 주어진 정보가 없거나 부족하다면 이를 안내하라.\n"
                 f"{resoruce_str}\n"
@@ -152,16 +153,19 @@ class ChatService:
             session_id = chat_session_manager.get_or_create_session(chat_message.session_id)
             history = chat_session_manager.get_session_history(session_id)
 
+            # If session is new, add system prompt
             if not history:
                 chat_session_manager.add_message_to_session(session_id, 'user', get_system_prompt())
                 history = chat_session_manager.get_session_history(session_id)
 
+            # Try to find subject information by node ID
             try:
                 subject_response = await find_resources_by_node_id(chat_message.content.strip())
             except RuntimeError as e:
                 logger.error(f"Error finding subject by node ID: {e}")
                 raise HTTPException(status_code=404, detail="주제를 찾을 수 없습니다.")
-            # Generate response using the subject context
+            
+            # Build enhanced content for Gemini response
             enhanced_content = (
                 "아래 주제에 대해 안내하라. 너의 역할은 주어진 주제와 관련된 책이나 관련된 주제 등을 통해 이용자에게 접근점을 제시하는 것이다.\n"
                 "주제를 안내하기 위해 주어진 관련 정보가 없거나 부족하다면 이를 밝혀라.\n"
@@ -192,16 +196,21 @@ class ChatService:
             session_id = chat_session_manager.get_or_create_session(chat_message.session_id)
             history = chat_session_manager.get_session_history(session_id)
 
+            # If session is new, add system prompt
             if not history:
                 chat_session_manager.add_message_to_session(session_id, 'user', get_system_prompt())
                 history = chat_session_manager.get_session_history(session_id)
 
+            # Build prompt for discovering additional resources
             one_more_string = (
                 "다음은 이용자가 다양한 관점이나 창의적 지적 탐험을 할 수 있기 위해 주제명 표목 네트워크에서 찾은 주제 자원 후보이다.\n"
                 "이를 활용하여 이용자가 더 깊이 탐구할 수 있도록 돕는 추가 정보를 제공하라.\n"
                 "단, 이용자가 이미 알고 있는 정보는 반복하지 말고, 새로운 관점이나 관련된 주제를 중심으로 안내하라.\n"
-                "'subject_candidates_path'는 원래 주제와 새로운 주제 후보의 연결 경로이다. 이를 활용하여 주제간 연결됨을 설명하라.\n"
+                "'좋은 질문입니다'같은 인삿말, 추임새 등 필요없는 내용은 말하지 않아도 됨.\n"
+                "'subject_candidates_path'는 원래 주제와 새로운 주제 후보의 연결 경로들이다.\n"
+                "이 중 필요한 경로 후보를 선정하여 주제간 연결을 설명하라. 이때 가능하다면 텍스트 다이어그램(graph td) 등을 활용해도 좋다.\n"
             )
+            # Find one more resource for the user
             one_more_resource = await add_one_more_resource(history=history, resource_id=chat_message.content.strip())
             one_more_content = f"{one_more_string}\n{one_more_resource}\n"
             one_more_response_text = await self._generate_response(one_more_content, history)
@@ -220,11 +229,11 @@ class ChatService:
         Uses chat history and system prompt if available.
         """
         try:
+            # Format chat history for Gemini API
             chat_history = format_gemini_chat_history(history)
             # Start chat and send message using Gemini model
             chat = self.model.start_chat(history=chat_history)
             response = await asyncio.to_thread(chat.send_message, message)
-
             return response.text
 
         except Exception as e:
@@ -253,6 +262,7 @@ class ChatService:
         Returns session ID, messages, and message count.
         """
         history = chat_session_manager.get_session_history(session_id)
+        # Filter messages to only include user and assistant roles
         return {
             "session_id": session_id,
             "messages": [msg for msg in history if msg['role'] in ['user', 'assistant']],
@@ -280,10 +290,8 @@ class ChatService:
         """
         return chat_session_manager.get_session_stats()
 
-
 # Global chat service instance
 chat_service = ChatService()
-
 
 @lru_cache()
 def get_chat_service() -> ChatService:

@@ -128,12 +128,12 @@ export function renderMarkdown(text) {
 function processAtPatterns(text) {
     // @nlk:KSH...@ 패턴 (주제명 표목)
     text = text.replace(/@(nlk:[A-Z0-9]+)@/g, (match, code) => {
-        return `<a href="#" class="reference-link subject-link" data-reference-type="subject" data-reference-code="${code}" onclick="handleReferenceClick(event, '${code}', 'subject')">주제 더보기</a><a href="#" class="reference-link subject-link" data-reference-type="subject" data-reference-code="${code}" onclick="handleReferenceClick(event, '${code}', 'discover')">💡 발견</a>`;
+        return `<a href="#" class="reference-link subject-link" data-reference-type="subject" data-reference-code="${code}" onclick="handleReferenceClick(event, '${code}', 'subject')">?</a><a href="#" class="reference-link subject-link" data-reference-type="subject" data-reference-code="${code}" onclick="handleReferenceClick(event, '${code}', 'discover')">💡 발견</a>`;
     });
     
     // @9788978788601@ 패턴 (ISBN)
     text = text.replace(/@(\d{13})@/g, (match, isbn) => {
-        return `<a href="#" class="reference-link book-link" data-reference-type="book" data-reference-code="${isbn}" onclick="handleReferenceClick(event, '${isbn}', 'book')">책 더보기</a><a href="#" class="reference-link book-link" data-reference-type="book" data-reference-code="${isbn}" onclick="handleReferenceClick(event, '${isbn}', 'discover')">💡 발견</a>`;
+        return `<a href="#" class="reference-link book-link" data-reference-type="book" data-reference-code="${isbn}" onclick="handleReferenceClick(event, '${isbn}', 'book')">?</a><a href="#" class="reference-link book-link" data-reference-type="book" data-reference-code="${isbn}" onclick="handleReferenceClick(event, '${isbn}', 'discover')">💡 발견</a>`;
     });
     
     return text;
