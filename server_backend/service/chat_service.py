@@ -209,6 +209,8 @@ class ChatService:
                 "'좋은 질문입니다'같은 인삿말, 추임새 등 필요없는 내용은 말하지 않아도 됨.\n"
                 "'subject_candidates_path'는 원래 주제와 새로운 주제 후보의 연결 경로들이다.\n"
                 "이 중 필요한 경로 후보를 선정하여 주제간 연결을 설명하라. 이때 mermaid 텍스트 다이어그램을 활용하라.\n"
+                "mermaid 그래프 작성시 연결 화살표에 주제간의 관계가 어떠한지 라벨을 달아라.\n"
+                "mermaid 그래프 작성시 주제명만 표시하고, 주제 ID(e.g. nlk:~)는 표시하지 마라.\n"
             )
             # Find one more resource for the user
             one_more_resource = await add_one_more_resource(history=history, resource_id=chat_message.content.strip())
