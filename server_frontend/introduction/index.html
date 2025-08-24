@@ -97,9 +97,14 @@
                 <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-8">
                     이용자의 정보 탐색 능동성 제고 <br> + <br> 다가오는 AI 시대에 적의한 새로운 정보 탐색 경험을 제공
                 </p>
-                <a href="#solution" class="bg-indigo-600 text-white px-8 py-3 rounded-lg font-bold text-lg hover:bg-indigo-700 transition-transform transform hover:scale-105 btn-primary inline-block" aria-label="핵심 솔루션 섹션으로 이동">
-                    솔루션 자세히 보기
-                </a>
+                <div class="flex flex-col items-center gap-4">
+                    <a href="#solution" class="bg-indigo-600 text-white px-8 py-3 rounded-lg font-bold text-lg hover:bg-indigo-700 transition-transform transform hover:scale-105 btn-primary w-full max-w-xs text-center" aria-label="핵심 솔루션 섹션으로 이동">
+                        제안 솔루션 자세히 보기
+                    </a>
+                    <a href="#solution" class="bg-indigo-600 text-white px-8 py-3 rounded-lg font-bold text-lg hover:bg-indigo-700 transition-transform transform hover:scale-105 btn-primary w-full max-w-xs text-center" aria-label="핵심 솔루션 섹션으로 이동">
+                        챗봇 파이프라인 체험하기
+                    </a>
+                </div>
             </div>
         </section>
 
@@ -108,44 +113,45 @@
             <div class="container mx-auto px-6">
                 <div class="text-center mb-12">
                     <h2 id="problem-title" class="text-3xl md:text-4xl font-bold text-gray-900">왜 새로운 정보 탐색 방식이 필요할까요?</h2>
-                    <p class="text-lg text-gray-600 mt-4 max-w-2xl mx-auto">도서관 내 비치된 검색용 PC, Youtube, ChatGPT에서 영감을 받았습니다.</p>
+                    <h3 class="text-xl text-gray-600 mt-4 max-w-3xl mx-auto">도서관 검색 PC, Youtube, ChatGPT에서 동기를 얻었습니다.</h3>
                 </div>
-                <div class="grid md:grid-cols-2 gap-10 items-center">
-                    <div class="space-y-8">
-                        <article class="flex items-start space-x-4 feature-card">
-                            <div class="flex-shrink-0 bg-indigo-100 text-indigo-600 p-3 rounded-full" aria-hidden="true">
-                                <i data-lucide="library"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-bold mb-2">정체된 도서관 검색</h3>
-                                <p class="text-gray-600">도서관 정보 검색은 수십 년간 큰 변화 없이 '소장처 확인' 수준에 머물러 있습니다. 이용자의 다양한 정보 요구를 충족시키기 어렵고, 주제 기반의 깊이 있는 탐색이 어렵습니다.</p>
-                            </div>
-                        </article>
-                        <article class="flex items-start space-x-4 feature-card">
-                            <div class="flex-shrink-0 bg-indigo-100 text-indigo-600 p-3 rounded-full" aria-hidden="true">
-                                <i data-lucide="filter"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-bold mb-2">알고리즘을 통한 수동적 정보 소비</h3>
-                                <p class="text-gray-600">상업적 추천 알고리즘은 이용자를 편향된 정보 환경에 가두어 '정신적 비만'을 유발합니다. 이러한 상황 속에서 도서관은 이용자에게 정보의 선택권을 보장하는 좋은 정보 제공자 입니다.</p>
+                <div class="grid md:grid-cols-1 gap-10 items-center">
+                        <article class="feature-card mb-12">
+                            <div class="flex flex-col items-center">
+                                <div class="bg-indigo-100 text-indigo-600 p-6 rounded-full mb-4" aria-hidden="true">
+                                    <i data-lucide="library" class="w-12 h-12"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold mb-2 text-center">정체된 도서관 검색</h3>
+                                <p class="text-xl text-center mb-4">도서관 정보 검색은 수십 년간 큰 변화 없이 '소장처 확인' 수준에 머물러 있습니다. 이용자의 다양한 정보 요구를 충족시키기 어렵고, 주제 기반의 깊이 있는 탐색이 어렵습니다.</p>
+                                <img src="./img/old_pc.jpg" alt="국립중앙도서관 검색용 PC" class="mt-4 rounded-lg w-full max-w-3xl shadow" loading="lazy">
+                                <p class="text-lg text-gray-600 mt-4 text-center">도서관에서 익히 찾아볼 수 있는 검색용 PC</p>
+                                <img src="./img/legacy_search.png" alt="도서관 상세 검색 화면 예시" class="mt-4 rounded-lg w-full max-w-3xl shadow" loading="lazy">
+                                <p class="text-lg mt-4 text-center">전통적인 도서관 검색 시스템의 화면 갈무리 - 서명이나 저자명 등을 정확히 알고 있지 못한 막연하거나 구체적이지 않은 정보 요구에는 대응하기 힘듭니다.</p>
+                                <img src="./img/legacy_search_subject.png" alt="도서관 주제 검색 화면 예시" class="mt-4 rounded-lg w-full max-w-3xl shadow" loading="lazy">
+                                <p class="text-lg text-gray-600 mt-4 text-center">물론 주제명 검색도 이미 있는 기능입니다. 그러나 주제명을 정보 탐색에서 활용하기 위해서는 정확한 '주제명 표목'을 알고 있어야 하고, 제공되는 레거시 시스템이 주제 사이를 '탐험'하는데 적합한지는 의문이 있습니다. 여차한 이유로 실제 도서관 현장에서 주제명 표목이 주요한 탐색 도구로 활용되지 못하고 있습니다. </p>
                             </div>
                         </article>
-                        <article class="flex items-start space-x-4 feature-card">
-                            <div class="flex-shrink-0 bg-indigo-100 text-indigo-600 p-3 rounded-full" aria-hidden="true">
-                                <i data-lucide="bot"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-bold mb-2">AI 중심 정보 이용 행태</h3>
-                                <p class="text-gray-600">최근 ChatGPT와 같은 AI가 정보 습득의 주 원천이 되고 있습니다. 도서관이 그동안 축적한 '메타데이터'는 이러한 AI 자동 생성의 유용한 근거(grounding)이 될 수 있습니다.</p>
+                        <article class="feature-card mb-12">
+                            <div class="flex flex-col items-center">
+                                <div class="bg-indigo-100 text-indigo-600 p-6 rounded-full mb-4" aria-hidden="true">
+                                    <i data-lucide="filter"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold mb-2 text-center">알고리즘을 통한 수동적 정보 소비</h3>
+                                <p class="text-xl text-gray-600 text-center">상업적 추천 알고리즘은 이용자를 편향된 정보 환경에 가두어 '정신적 비만'을 유발합니다. 이러한 상황 속에서 도서관은 이용자에게 정보의 선택권을 보장하는 좋은 정보 제공자 입니다.</p>
+                                <img src="./img/youtube.png" alt="유튜브 메인화면 갈무리" class="mt-4 rounded-lg w-full max-w-3xl shadow" loading="lazy">
+                                <p class="text-lg text-gray-600 mt-4 text-center">알고리즘의 추천대로만 소비하는 것은 이용자의 지적 발전 가능성을 제한합니다. 사적 정보 제공자와 달리 공익을 추구하는 도서관은 자신이 가진 '주제명 표목'등의 메타데이터를 통해 이용자가 능동적으로 정보를 탐색하도록 도울 수 있습니다.</p>
                             </div>
                         </article>
-                    </div>
-                    <div class="bg-white p-4 rounded-2xl shadow-lg border border-gray-200 hover-scale">
-                        <img src="./img/old_pc.jpg" 
-                             alt="출처: https://ko.wikipedia.org/wiki/파일:국립중앙도서관_4층_검색코너.jpg" 
-                             class="rounded-lg responsive-image"
-                             loading="lazy">
-                    </div>
+                        <article class="feature-card mb-12">
+                            <div class="flex flex-col items-center">
+                                <div class="bg-indigo-100 text-indigo-600 p-6 rounded-full mb-4" aria-hidden="true">
+                                    <i data-lucide="bot"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold mb-2 text-center">AI 중심 정보 이용 행태</h3>
+                                <p class="text-xl text-gray-600 text-center">최근 ChatGPT와 같은 AI가 정보 습득의 주 원천이 되고 있습니다. 도서관이 그동안 축적한 '메타데이터'는 이러한 AI 자동 생성의 유용한 근거(grounding)이 될 수 있습니다.</p>
+                            </div>
+                        </article>
+                    
                 </div>
             </div>
         </section>

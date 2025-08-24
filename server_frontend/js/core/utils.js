@@ -153,6 +153,12 @@ function fixMermaidSyntax(diagramCode) {
             return `${nodeId}("${content}")`;
         }
         return match;
+    }).replace(/(\w+)\(([^\)]*\([^\)]*\)[^\)]*)\)/g, (match, nodeId, content) => {
+        // ()안에 ()가 있는 경우도 따옴표로 감싸기
+        if (!content.startsWith('"') || !content.endsWith('"')) {
+            return `${nodeId}("${content}")`;
+        }
+        return match;
     });
 }
 
