@@ -116,7 +116,7 @@ export function renderMarkdown(text) {
         });
         
         // Mermaid 다이어그램 처리
-        const htmlContent = marked.parse(text);
+        const htmlContent = marked.parse(text).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         return processMermaidDiagrams(htmlContent);
     } else {
         return text
@@ -132,13 +132,40 @@ function processMermaidDiagrams(html) {
     // ```mermaid로 감싸진 코드 블록을 찾아서 mermaid div로 변환
     return html.replace(/<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g, (match, diagramCode) => {
         const cleanCode = diagramCode.trim();
+        const fixedCode = fixMermaidSyntax(cleanCode);    // Mermaid 문법 오류 수정
         const diagramId = 'mermaid-' + Math.random().toString(36).substr(2, 9);
-        return `<div class="mermaid" id="${diagramId}">${cleanCode}</div>`;
+        return `<div class="mermaid" id="${diagramId}">${fixedCode}</div>`;
+    });
+}
+
+// Mermaid 문법 오류를 수정하는 함수
+function fixMermaidSyntax(diagramCode) {
+    // 노드 정의에서 괄호/대괄호 문법 오류 수정
+    return diagramCode.replace(/(\w+)\[([^\]]*\([^\)]*\)[^\]]*)\]/g, (match, nodeId, content) => {
+        // 이미 따옴표로 감싸져 있는지 확인
+        if (!content.startsWith('"') || !content.endsWith('"')) {
+            return `${nodeId}["${content}"]`;
+        }
+        return match;
+    }).replace(/(\w+)\(([^\)]*\[[^\]]*\][^\)]*)\)/g, (match, nodeId, content) => {
+        // 이미 따옴표로 감싸져 있는지 확인
+        if (!content.startsWith('"') || !content.endsWith('"')) {
+            return `${nodeId}("${content}")`;
+        }
+        return match;
     });
 }
 
 // @로 둘러싸인 패턴을 링크로 변환하는 함수
 function processAtPatterns(text) {
+    
+    // Mermaid 다이어그램 내부의 @...@ 패턴은 제거
+    text = text.replace(/```mermaid([\s\S]*?)```/g, (match, diagramContent) => {
+        // Mermaid 다이어그램 내부의 @...@ 패턴 제거
+        const cleanedDiagram = diagramContent.replace(/@[^@]*@/g, '');
+        return '```mermaid' + cleanedDiagram + '```';
+    });
+    
     // @nlk:KSH...@ 패턴 (주제명 표목)
     text = text.replace(/@(nlk:[A-Z0-9]+)@/g, (match, code) => {
         return `<a href="#" class="reference-link subject-link" data-reference-type="subject" data-reference-code="${code}" onclick="handleReferenceClick(event, '${code}', 'subject')">?</a><a href="#" class="reference-link subject-link" data-reference-type="subject" data-reference-code="${code}" onclick="handleReferenceClick(event, '${code}', 'discover')">💡 발견</a>`;
@@ -149,6 +176,8 @@ function processAtPatterns(text) {
         return `<a href="#" class="reference-link book-link" data-reference-type="book" data-reference-code="${isbn}" onclick="handleReferenceClick(event, '${isbn}', 'book')">?</a><a href="#" class="reference-link book-link" data-reference-type="book" data-reference-code="${isbn}" onclick="handleReferenceClick(event, '${isbn}', 'discover')">💡 발견</a>`;
     });
     
+    console.log('Processed text with @ patterns:', text);
+
     return text;
 }
 
