@@ -4,6 +4,5 @@
 
 프로토타입 링크
 
-1. <https://shnavigator.app>
+1. <https://shnavigator.app> (비용 문제로 닫음)
 2. 데이터베이스 파일 (20250818)
-   - <https://drive.google.com/file/d/10H14fyKhgbodSJ65vOD3Xv3VIvqA0Vyg/view?usp=share_link>
