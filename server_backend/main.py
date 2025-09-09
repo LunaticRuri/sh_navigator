@@ -132,7 +132,6 @@ def create_app() -> FastAPI:
     
     # Mount static files for frontend
     app.mount("/", StaticFiles(directory="../server_frontend", html=True), name="static")
-    app.mount("/introduction", StaticFiles(directory="../server_frontend/introduction"), name="introduction_static")
 
 
     return app

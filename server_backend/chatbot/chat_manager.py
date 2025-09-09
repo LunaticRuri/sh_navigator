@@ -11,7 +11,7 @@ import uuid
 import json
 import logging
 from typing import Dict, List, Optional
-from schemas.chat import ChatSession, SessionStats, ChatMessage
+from schemas.chat import ChatSession, SessionStats
 from core.config import REDIS_URL, REDIS_SESSION_PREFIX, SESSION_TIMEOUT
 
 logger = logging.getLogger(__name__)
